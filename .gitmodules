@@ -1,0 +1,6 @@
+[submodule "extern/Ikemen-GO"]
+	path = extern/Ikemen-GO
+	url = https://github.com/ikemen-engine/Ikemen-GO.git
+[submodule "extern/Ikemen-GO-Screenpack"]
+	path = extern/Ikemen-GO-Screenpack
+	url = https://github.com/ikemen-engine/Ikemen-GO-Screenpack.git

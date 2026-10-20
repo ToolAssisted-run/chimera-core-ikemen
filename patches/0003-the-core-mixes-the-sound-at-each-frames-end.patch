@@ -1,0 +1,16 @@
+diff --git a/src/audio_sdl.go b/src/audio_sdl.go
+index 42b3487..b48de16 100644
+--- a/src/audio_sdl.go
++++ b/src/audio_sdl.go
+@@ -61,6 +61,11 @@ func (s *SDLSpeaker) Init(sampleRate beep.SampleRate, bufferSize int) error {
+ 	sdl.ClearQueuedAudio(s.dev)
+ 	sdl.PauseAudioDevice(s.dev, false)
+ 
++	// The Chimera core mixes each frame's sound itself, at the frame's end.
++	if chimeraCore {
++		return nil
++	}
++
+ 	// Start the audio pushing thread
+ 	SafeGo(func() {
+ 		for true {

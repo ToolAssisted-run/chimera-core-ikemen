@@ -1,0 +1,486 @@
+diff --git a/src/internal/runtime/syscall/linux/asm_linux_amd64.s b/src/internal/runtime/syscall/linux/asm_linux_amd64.s
+index 3740ef1b..148a1a78 100644
+--- a/src/internal/runtime/syscall/linux/asm_linux_amd64.s
++++ b/src/internal/runtime/syscall/linux/asm_linux_amd64.s
+@@ -32,7 +32,7 @@ TEXT ·Syscall6<ABIInternal>(SB),NOSPLIT,$0
+ 	MOVQ	CX, SI  // a2
+ 	MOVQ	BX, DI  // a1
+ 	// num already in AX.
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	ok
+ 	NEGQ	AX
+diff --git a/src/runtime/sys_linux_amd64.s b/src/runtime/sys_linux_amd64.s
+index 4c52b18b..2624f851 100644
+--- a/src/runtime/sys_linux_amd64.s
++++ b/src/runtime/sys_linux_amd64.s
+@@ -51,7 +51,7 @@
+ TEXT runtime·exit(SB),NOSPLIT,$0-4
+ 	MOVL	code+0(FP), DI
+ 	MOVL	$SYS_exit_group, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	RET
+ 
+ // func exitThread(wait *atomic.Uint32)
+@@ -61,7 +61,7 @@ TEXT runtime·exitThread(SB),NOSPLIT,$0-8
+ 	MOVL	$0, (AX)
+ 	MOVL	$0, DI	// exit code
+ 	MOVL	$SYS_exit, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	// We may not even have a stack any more.
+ 	INT	$3
+ 	JMP	0(PC)
+@@ -73,7 +73,7 @@ TEXT runtime·open(SB),NOSPLIT,$0-20
+ 	MOVL	mode+8(FP), DX
+ 	MOVL	perm+12(FP), R10
+ 	MOVL	$SYS_openat, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	2(PC)
+ 	MOVL	$-1, AX
+@@ -83,7 +83,7 @@ TEXT runtime·open(SB),NOSPLIT,$0-20
+ TEXT runtime·closefd(SB),NOSPLIT,$0-12
+ 	MOVL	fd+0(FP), DI
+ 	MOVL	$SYS_close, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	2(PC)
+ 	MOVL	$-1, AX
+@@ -95,7 +95,7 @@ TEXT runtime·write1(SB),NOSPLIT,$0-28
+ 	MOVQ	p+8(FP), SI
+ 	MOVL	n+16(FP), DX
+ 	MOVL	$SYS_write, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+@@ -104,7 +104,7 @@ TEXT runtime·read(SB),NOSPLIT,$0-28
+ 	MOVQ	p+8(FP), SI
+ 	MOVL	n+16(FP), DX
+ 	MOVL	$SYS_read, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+@@ -113,7 +113,7 @@ TEXT runtime·pipe2(SB),NOSPLIT,$0-20
+ 	LEAQ	r+8(FP), DI
+ 	MOVL	flags+0(FP), SI
+ 	MOVL	$SYS_pipe2, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, errno+16(FP)
+ 	RET
+ 
+@@ -131,40 +131,40 @@ TEXT runtime·usleep(SB),NOSPLIT,$16
+ 	MOVQ	SP, DI
+ 	MOVL	$0, SI
+ 	MOVL	$SYS_nanosleep, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	RET
+ 
+ TEXT runtime·gettid(SB),NOSPLIT,$0-4
+ 	MOVL	$SYS_gettid, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+0(FP)
+ 	RET
+ 
+ TEXT runtime·raise(SB),NOSPLIT,$0
+ 	MOVL	$SYS_getpid, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, R12
+ 	MOVL	$SYS_gettid, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, SI	// arg 2 tid
+ 	MOVL	R12, DI	// arg 1 pid
+ 	MOVL	sig+0(FP), DX	// arg 3
+ 	MOVL	$SYS_tgkill, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	RET
+ 
+ TEXT runtime·raiseproc(SB),NOSPLIT,$0
+ 	MOVL	$SYS_getpid, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, DI	// arg 1 pid
+ 	MOVL	sig+0(FP), SI	// arg 2
+ 	MOVL	$SYS_kill, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	RET
+ 
+ TEXT ·getpid(SB),NOSPLIT,$0-8
+ 	MOVL	$SYS_getpid, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVQ	AX, ret+0(FP)
+ 	RET
+ 
+@@ -173,7 +173,7 @@ TEXT ·tgkill(SB),NOSPLIT,$0
+ 	MOVQ	tid+8(FP), SI
+ 	MOVQ	sig+16(FP), DX
+ 	MOVL	$SYS_tgkill, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	RET
+ 
+ TEXT runtime·setitimer(SB),NOSPLIT,$0-24
+@@ -181,7 +181,7 @@ TEXT runtime·setitimer(SB),NOSPLIT,$0-24
+ 	MOVQ	new+8(FP), SI
+ 	MOVQ	old+16(FP), DX
+ 	MOVL	$SYS_setittimer, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	RET
+ 
+ TEXT runtime·timer_create(SB),NOSPLIT,$0-28
+@@ -189,7 +189,7 @@ TEXT runtime·timer_create(SB),NOSPLIT,$0-28
+ 	MOVQ	sevp+8(FP), SI
+ 	MOVQ	timerid+16(FP), DX
+ 	MOVL	$SYS_timer_create, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+@@ -199,14 +199,14 @@ TEXT runtime·timer_settime(SB),NOSPLIT,$0-28
+ 	MOVQ	new+8(FP), DX
+ 	MOVQ	old+16(FP), R10
+ 	MOVL	$SYS_timer_settime, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+ TEXT runtime·timer_delete(SB),NOSPLIT,$0-12
+ 	MOVL	timerid+0(FP), DI
+ 	MOVL	$SYS_timer_delete, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+8(FP)
+ 	RET
+ 
+@@ -215,7 +215,7 @@ TEXT runtime·mincore(SB),NOSPLIT,$0-28
+ 	MOVQ	n+8(FP), SI
+ 	MOVQ	dst+16(FP), DX
+ 	MOVL	$SYS_mincore, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+@@ -294,7 +294,7 @@ ret:
+ 	RET
+ fallback:
+ 	MOVQ	$SYS_clock_gettime, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	JMP	ret
+ 
+ TEXT runtime·rtsigprocmask(SB),NOSPLIT,$0-28
+@@ -303,7 +303,7 @@ TEXT runtime·rtsigprocmask(SB),NOSPLIT,$0-28
+ 	MOVQ	old+16(FP), DX
+ 	MOVL	size+24(FP), R10
+ 	MOVL	$SYS_rt_sigprocmask, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	2(PC)
+ 	MOVL	$0xf1, 0xf1  // crash
+@@ -315,7 +315,7 @@ TEXT runtime·rt_sigaction(SB),NOSPLIT,$0-36
+ 	MOVQ	old+16(FP), DX
+ 	MOVQ	size+24(FP), R10
+ 	MOVL	$SYS_rt_sigaction, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+32(FP)
+ 	RET
+ 
+@@ -487,7 +487,7 @@ TEXT runtime·sigreturn__sigaction(SB),NOSPLIT,$0
+ 	// form for positive imm32, so write the bytes by hand.
+ 	BYTE $0x48; BYTE $0xc7; BYTE $0xc0
+ 	BYTE $0x0f; BYTE $0x00; BYTE $0x00; BYTE $0x00
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	INT $3	// not reached
+ 
+ TEXT runtime·sysMmap(SB),NOSPLIT,$0
+@@ -499,7 +499,7 @@ TEXT runtime·sysMmap(SB),NOSPLIT,$0
+ 	MOVL	off+28(FP), R9
+ 
+ 	MOVL	$SYS_mmap, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	ok
+ 	NOTQ	AX
+@@ -534,7 +534,7 @@ TEXT runtime·sysMunmap(SB),NOSPLIT,$0
+ 	MOVQ	addr+0(FP), DI
+ 	MOVQ	n+8(FP), SI
+ 	MOVQ	$SYS_munmap, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	2(PC)
+ 	MOVL	$0xf1, 0xf1  // crash
+@@ -558,7 +558,7 @@ TEXT runtime·madvise(SB),NOSPLIT,$0
+ 	MOVQ	n+8(FP), SI
+ 	MOVL	flags+16(FP), DX
+ 	MOVQ	$SYS_madvise, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+@@ -572,7 +572,7 @@ TEXT runtime·futex(SB),NOSPLIT,$0
+ 	MOVQ	addr2+24(FP), R8
+ 	MOVL	val3+32(FP), R9
+ 	MOVL	$SYS_futex, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+40(FP)
+ 	RET
+ 
+@@ -602,7 +602,7 @@ TEXT runtime·clone(SB),NOSPLIT|NOFRAME,$0
+ 	ORQ 	$0x00080000, DI //add flag CLONE_SETTLS(0x00080000) to call clone
+ nog1:
+ 	MOVL	$SYS_clone, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 
+ 	// In parent, return.
+ 	CMPQ	AX, $0
+@@ -621,7 +621,7 @@ nog1:
+ 
+ 	// Initialize m->procid to Linux tid
+ 	MOVL	$SYS_gettid, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVQ	AX, m_procid(R13)
+ 
+ 	// In child, set up new stack
+@@ -638,14 +638,14 @@ nog2:
+ 	// It shouldn't return. If it does, exit that thread.
+ 	MOVL	$111, DI
+ 	MOVL	$SYS_exit, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	JMP	-3(PC)	// keep exiting
+ 
+ TEXT runtime·sigaltstack(SB),NOSPLIT,$0
+ 	MOVQ	new+0(FP), DI
+ 	MOVQ	old+8(FP), SI
+ 	MOVQ	$SYS_sigaltstack, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	2(PC)
+ 	MOVL	$0xf1, 0xf1  // crash
+@@ -662,7 +662,7 @@ TEXT runtime·settls(SB),NOSPLIT,$32
+ 	MOVQ	DI, SI
+ 	MOVQ	$0x1002, DI	// ARCH_SET_FS
+ 	MOVQ	$SYS_arch_prctl, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	2(PC)
+ 	MOVL	$0xf1, 0xf1  // crash
+@@ -670,7 +670,7 @@ TEXT runtime·settls(SB),NOSPLIT,$32
+ 
+ TEXT runtime·osyield(SB),NOSPLIT,$0
+ 	MOVL	$SYS_sched_yield, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	RET
+ 
+ TEXT runtime·sched_getaffinity(SB),NOSPLIT,$0
+@@ -678,7 +678,7 @@ TEXT runtime·sched_getaffinity(SB),NOSPLIT,$0
+ 	MOVQ	len+8(FP), SI
+ 	MOVQ	buf+16(FP), DX
+ 	MOVL	$SYS_sched_getaffinity, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+@@ -690,7 +690,7 @@ TEXT runtime·access(SB),NOSPLIT,$0
+ 	MOVL	mode+8(FP), DX
+ 	MOVL	$0, R10
+ 	MOVL	$SYS_faccessat, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+16(FP)
+ 	RET
+ 
+@@ -700,7 +700,7 @@ TEXT runtime·connect(SB),NOSPLIT,$0-28
+ 	MOVQ	addr+8(FP), SI
+ 	MOVL	len+16(FP), DX
+ 	MOVL	$SYS_connect, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+24(FP)
+ 	RET
+ 
+@@ -710,7 +710,7 @@ TEXT runtime·socket(SB),NOSPLIT,$0-20
+ 	MOVL	typ+4(FP), SI
+ 	MOVL	prot+8(FP), DX
+ 	MOVL	$SYS_socket, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVL	AX, ret+16(FP)
+ 	RET
+ 
+@@ -719,7 +719,7 @@ TEXT runtime·sbrk0(SB),NOSPLIT,$0-8
+ 	// Implemented as brk(NULL).
+ 	MOVQ	$0, DI
+ 	MOVL	$SYS_brk, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVQ	AX, ret+0(FP)
+ 	RET
+ 
+diff --git a/src/runtime/sys_minibox_linux.go b/src/runtime/sys_minibox_linux.go
+new file mode 100644
+index 00000000..564c3b30
+--- /dev/null
++++ b/src/runtime/sys_minibox_linux.go
+@@ -0,0 +1,10 @@
++// miniBox: the system calls of the runtime and of package syscall go to the
++// sandbox (sys_minibox_linux_amd64.s).
++
++package runtime
++
++// mbsyscall is called from the assembly of package syscall and of
++// internal/runtime/syscall/linux as well.
++//
++//go:linkname mbsyscall
++func mbsyscall()
+diff --git a/src/runtime/sys_minibox_linux_amd64.s b/src/runtime/sys_minibox_linux_amd64.s
+new file mode 100644
+index 00000000..b657483a
+--- /dev/null
++++ b/src/runtime/sys_minibox_linux_amd64.s
+@@ -0,0 +1,63 @@
++// miniBox: every system call of the runtime and of package syscall comes here
++// instead of executing SYSCALL, which would go to the real kernel.
++
++#include "textflag.h"
++
++// mbsyscall takes a system call the way SYSCALL does - the number in AX, the
++// arguments in DI, SI, DX, R10, R8 and R9, the answer in AX, every register
++// but CX and R11 kept - and makes it the way the sandbox takes one: a call to
++// its trampoline at 0x35f00000080, with the fourth argument in CX. The
++// trampoline keeps none of the other registers (it may switch to another
++// thread before it returns, and it zeroes the scratch ones), so they are
++// saved here.
++//
++// A few calls the sandbox does not provide are answered here instead:
++//   sigaltstack (131): there are no signals; any old stack is "disabled".
++//   mincore (27), prlimit64 (302): ENOSYS. The runtime and package syscall
++//   take that answer and run on.
++TEXT runtime·mbsyscall(SB),NOSPLIT|NOFRAME,$0
++	PUSHQ	BX
++	PUSHQ	DX
++	PUSHQ	SI
++	PUSHQ	DI
++	PUSHQ	R8
++	PUSHQ	R9
++	PUSHQ	R10
++	PUSHQ	R12
++	PUSHQ	R13
++	PUSHQ	R14
++	PUSHQ	R15
++	CMPQ	AX, $131
++	JEQ	altstack
++	CMPQ	AX, $27
++	JEQ	nosys
++	CMPQ	AX, $302
++	JEQ	nosys
++	MOVQ	R10, CX
++	MOVQ	$0x35f00000080, R10
++	CALL	R10
++done:
++	POPQ	R15
++	POPQ	R14
++	POPQ	R13
++	POPQ	R12
++	POPQ	R10
++	POPQ	R9
++	POPQ	R8
++	POPQ	DI
++	POPQ	SI
++	POPQ	DX
++	POPQ	BX
++	RET
++altstack:
++	TESTQ	SI, SI
++	JEQ	altok
++	MOVQ	$0, 0(SI)	// ss_sp
++	MOVL	$2, 8(SI)	// ss_flags = SS_DISABLE
++	MOVQ	$0, 16(SI)	// ss_size
++altok:
++	XORL	AX, AX
++	JMP	done
++nosys:
++	MOVQ	$-38, AX	// -ENOSYS
++	JMP	done
+diff --git a/src/runtime/time_linux_amd64.s b/src/runtime/time_linux_amd64.s
+index 4935c6de..6b572553 100644
+--- a/src/runtime/time_linux_amd64.s
++++ b/src/runtime/time_linux_amd64.s
+@@ -87,11 +87,11 @@ ret:
+ 
+ fallback:
+ 	MOVQ	$SYS_clock_gettime, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 
+ 	MOVL	$1, DI // CLOCK_MONOTONIC
+ 	LEAQ	0(SP), SI
+ 	MOVQ	$SYS_clock_gettime, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 
+ 	JMP	ret
+diff --git a/src/syscall/asm_linux_amd64.s b/src/syscall/asm_linux_amd64.s
+index cf2f8238..79732fde 100644
+--- a/src/syscall/asm_linux_amd64.s
++++ b/src/syscall/asm_linux_amd64.s
+@@ -21,7 +21,7 @@ TEXT ·rawVforkSyscall(SB),NOSPLIT|NOFRAME,$0-48
+ 	MOVQ	$0, R9
+ 	MOVQ	trap+0(FP), AX	// syscall entry
+ 	POPQ	R12 // preserve return address
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	PUSHQ	R12
+ 	CMPQ	AX, $0xfffffffffffff001
+ 	JLS	ok2
+@@ -40,7 +40,7 @@ TEXT ·rawSyscallNoError(SB),NOSPLIT,$0-48
+ 	MOVQ	a2+16(FP), SI
+ 	MOVQ	a3+24(FP), DX
+ 	MOVQ	trap+0(FP), AX	// syscall entry
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	MOVQ	AX, r1+32(FP)
+ 	MOVQ	DX, r2+40(FP)
+ 	RET
+@@ -65,7 +65,7 @@ ret:
+ 	RET
+ fallback:
+ 	MOVL	$SYS_gettimeofday, AX
+-	SYSCALL
++	CALL	runtime·mbsyscall(SB)	// miniBox: was SYSCALL
+ 	JMP ret
+ ok7:
+ 	MOVQ	$0, err+8(FP)

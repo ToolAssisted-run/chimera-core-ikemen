@@ -1,0 +1,93 @@
+diff --git a/src/os/file_unix.go b/src/os/file_unix.go
+index 6f9cab78..8f6e54f8 100644
+--- a/src/os/file_unix.go
++++ b/src/os/file_unix.go
+@@ -191,6 +191,9 @@ func newFile(fd int, name string, kind newFileKind, nonBlocking bool) *File {
+ 		}
+ 	}
+ 
++	// miniBox: there is no epoll in the sandbox; every file blocks.
++	pollable = false
++
+ 	clearNonBlock := false
+ 	if pollable {
+ 		// The descriptor is already in non-blocking mode.
+diff --git a/src/runtime/netpoll_epoll.go b/src/runtime/netpoll_epoll.go
+index d6d00e67..c76fc9dc 100644
+--- a/src/runtime/netpoll_epoll.go
++++ b/src/runtime/netpoll_epoll.go
+@@ -2,7 +2,9 @@
+ // Use of this source code is governed by a BSD-style
+ // license that can be found in the LICENSE file.
+ 
+-//go:build linux
++// miniBox: no epoll; netpoll_minibox_linux.go instead.
++
++//go:build linux && !linux
+ 
+ package runtime
+ 
+diff --git a/src/runtime/netpoll_minibox_linux.go b/src/runtime/netpoll_minibox_linux.go
+new file mode 100644
+index 00000000..50d8d241
+--- /dev/null
++++ b/src/runtime/netpoll_minibox_linux.go
+@@ -0,0 +1,58 @@
++// miniBox: the sandbox has no epoll. Nothing is ever registered with this
++// poller (package os opens every file blocking); it only does the poller's
++// other job, sleeping until the next timer unless woken first - with a
++// note, as plan9's stub does, which is a futex wait with a timeout.
++
++package runtime
++
++var netpollStubLock mutex
++var netpollNote note
++
++// netpollBroken, protected by netpollBrokenLock, avoids a double notewakeup.
++var netpollBrokenLock mutex
++var netpollBroken bool
++
++func netpollinit() {
++}
++
++func netpollIsPollDescriptor(fd uintptr) bool {
++	return false
++}
++
++func netpollopen(fd uintptr, pd *pollDesc) uintptr {
++	return 38 // ENOSYS: the caller uses the descriptor blocking
++}
++
++func netpollclose(fd uintptr) uintptr {
++	return 0
++}
++
++func netpollarm(pd *pollDesc, mode int) {
++	throw("runtime: unused")
++}
++
++func netpollBreak() {
++	lock(&netpollBrokenLock)
++	broken := netpollBroken
++	netpollBroken = true
++	if !broken {
++		notewakeup(&netpollNote)
++	}
++	unlock(&netpollBrokenLock)
++}
++
++func netpoll(delay int64) (gList, int32) {
++	if delay != 0 {
++		lock(&netpollStubLock)
++
++		lock(&netpollBrokenLock)
++		noteclear(&netpollNote)
++		netpollBroken = false
++		unlock(&netpollBrokenLock)
++
++		notetsleep(&netpollNote, delay)
++		unlock(&netpollStubLock)
++		osyield()
++	}
++	return gList{}, 0
++}

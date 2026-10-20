@@ -1,0 +1,14 @@
+diff --git a/src/runtime/runtime1.go b/src/runtime/runtime1.go
+index fc26e9b3..352bf00c 100644
+--- a/src/runtime/runtime1.go
++++ b/src/runtime/runtime1.go
+@@ -444,6 +444,9 @@ func parseRuntimeDebugVars(godebug string) {
+ 	if debug.gccheckmark > 0 {
+ 		debug.asyncpreemptoff = 1
+ 	}
++	// miniBox: preempting a goroutine at any instruction takes a signal,
++	// and the sandbox delivers none.
++	debug.asyncpreemptoff = 1
+ }
+ 
+ func finishDebugVarsSetup() {

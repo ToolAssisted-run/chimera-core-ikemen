@@ -1,0 +1,61 @@
+From: Sergio Martin
+Subject: [PATCH] chimera: llvmpipe generates code for one CPU on every computer
+
+With CHIMERA_PINNED_CPU, Mesa reports an x86-64 with SSE2 and one
+processor whatever the computer has, and LLVM targets the baseline
+x86-64: the code llvmpipe makes for a shader, and so every picture, is
+the same everywhere, and no rasteriser thread is started.
+---
+diff -ru a/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp b/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp
+--- a/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp	2026-10-20 07:52:41.177765224 +0200
++++ b/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp	2026-10-20 07:52:41.193921910 +0200
+@@ -492,7 +492,13 @@
+       }
+    }
+ 
++#ifdef CHIMERA_PINNED_CPU
++   /* Chimera: the baseline x86-64, whatever this computer is (see
++    * u_cpu_detect.c) */
++   StringRef MCPU = "x86-64";
++#else
+    StringRef MCPU = llvm::sys::getHostCPUName();
++#endif
+    /*
+     * The cpu bits are no longer set automatically, so need to set mcpu manually.
+     * Note that the MAttrs set above will be sort of ignored (since we should
+diff -ru a/src/util/u_cpu_detect.c b/src/util/u_cpu_detect.c
+--- a/src/util/u_cpu_detect.c	2026-10-20 07:52:41.176562646 +0200
++++ b/src/util/u_cpu_detect.c	2026-10-20 07:52:41.193761843 +0200
+@@ -993,6 +993,32 @@
+       printf("util_cpu_caps.num_L3_caches = %u\n", util_cpu_caps.num_L3_caches);
+       printf("util_cpu_caps.num_cpu_mask_bits = %u\n", util_cpu_caps.num_cpu_mask_bits);
+    }
++#ifdef CHIMERA_PINNED_CPU
++   /* Chimera: the machine is the same on every computer, so llvmpipe is told
++    * of one CPU and the same one everywhere: x86-64 with SSE2 and nothing
++    * newer, one processor (so it rasterises on the calling thread and starts
++    * no threads), no denormals-are-zero bit. The code it generates for the
++    * game's shaders, and so every picture, is then the same bytes whatever
++    * the computer underneath has. */
++   {
++      uint16_t l3[UTIL_MAX_CPUS];
++      memset(l3, 0, sizeof l3);
++      memset(&util_cpu_caps, 0, sizeof util_cpu_caps);
++      util_cpu_caps.nr_cpus = 1;
++      util_cpu_caps.max_cpus = 1;
++      util_cpu_caps.family = CPU_UNKNOWN;
++      util_cpu_caps.cacheline = 64;
++      util_cpu_caps.has_mmx = 1;
++      util_cpu_caps.has_mmx2 = 1;
++      util_cpu_caps.has_sse = 1;
++      util_cpu_caps.has_sse2 = 1;
++      util_cpu_caps.max_vector_bits = 128;
++      util_cpu_caps.num_L3_caches = 1;
++      util_cpu_caps.num_cpu_mask_bits = 1;
++      memcpy(util_cpu_caps.cpu_to_L3, l3, sizeof l3);
++      util_cpu_caps.L3_affinity_mask = NULL;
++   }
++#endif
+    _util_cpu_caps_state.caps = util_cpu_caps;
+ 
+    /* This must happen at the end as it's used to guard everything else */

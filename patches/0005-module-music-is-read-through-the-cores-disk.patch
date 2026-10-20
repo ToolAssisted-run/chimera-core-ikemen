@@ -1,0 +1,46 @@
+diff --git a/src/sound_xm.go b/src/sound_xm.go
+index 6fc3e09..8916b00 100644
+--- a/src/sound_xm.go
++++ b/src/sound_xm.go
+@@ -96,13 +96,34 @@ func newXMStreamer(f *os.File) (*xmStreamer, error) {
+ 		return nil, Error("failed to create xmp context")
+ 	}
+ 
+-	// Use libxmp’s native loader instead of in-memory parsing.
+-	cpath := C.CString(f.Name())
+-	defer C.free(unsafe.Pointer(cpath))
+-
+-	if C.xmp_load_module(ctx, cpath) != 0 {
+-		C.xmp_free_context(ctx)
+-		return nil, Error("failed to load XM module")
++	if chimeraCore {
++		// The Chimera core: the module is read with Go's file calls (the
++		// core's own disk) and given to libxmp from memory. libxmp's own
++		// loader would open the computer's file of that name.
++		if _, err := f.Seek(0, io.SeekStart); err != nil {
++			C.xmp_free_context(ctx)
++			return nil, err
++		}
++		data, err := io.ReadAll(f)
++		if err != nil || len(data) == 0 {
++			C.xmp_free_context(ctx)
++			return nil, Error("failed to read XM module")
++		}
++		cdata := C.CBytes(data)
++		defer C.free(cdata)
++		if C.xmp_load_module_from_memory(ctx, cdata, C.long(len(data))) != 0 {
++			C.xmp_free_context(ctx)
++			return nil, Error("failed to load XM module")
++		}
++	} else {
++		// Use libxmp’s native loader instead of in-memory parsing.
++		cpath := C.CString(f.Name())
++		defer C.free(unsafe.Pointer(cpath))
++
++		if C.xmp_load_module(ctx, cpath) != 0 {
++			C.xmp_free_context(ctx)
++			return nil, Error("failed to load XM module")
++		}
+ 	}
+ 
+ 	// Convert Go file to C FILE*

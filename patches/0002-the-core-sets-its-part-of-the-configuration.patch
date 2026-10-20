@@ -1,0 +1,13 @@
+diff --git a/src/main.go b/src/main.go
+index e285176..3ed2eb7 100644
+--- a/src/main.go
++++ b/src/main.go
+@@ -177,6 +177,8 @@ func realMain() {
+ 	if runtime.GOOS == "android" {
+ 		cfg.Video.RenderMode = "OpenGL ES 3.2"
+ 	}
++	// the Chimera core's settings: its controls, its picture and sound
++	chimeraConfig(cfg)
+ 	sys.cfg = *cfg
+ 	// Logcat("LOG: Config Loaded. System Script: " + sys.cfg.Config.System)
+ 

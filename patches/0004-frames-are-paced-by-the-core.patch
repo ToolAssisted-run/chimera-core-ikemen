@@ -1,0 +1,19 @@
+diff --git a/src/system.go b/src/system.go
+index 5339736..9a4dddd 100644
+--- a/src/system.go
++++ b/src/system.go
+@@ -866,6 +866,14 @@ func (s *System) await(fps int) bool {
+ 
+ 	s.runMainThreadTask()
+ 
++	// The Chimera core paces the frames, not the computer's clock: every
++	// frame is drawn, and none is skipped to catch up.
++	if chimeraCore {
++		s.frameSkip = false
++		s.eventUpdate()
++		return !s.gameEnd
++	}
++
+ 	now := time.Now()
+ 	diff := s.redrawWait.nextTime.Sub(now)
+ 

@@ -1,0 +1,25 @@
+diff --git a/src/chimera_off.go b/src/chimera_off.go
+new file mode 100644
+index 0000000..8c08f6a
+--- /dev/null
++++ b/src/chimera_off.go
+@@ -0,0 +1,9 @@
++//go:build !chimera
++
++package main
++
++// What the Chimera core's build (the "chimera" tag) defines, for every
++// other build: the core's files are not there.
++const chimeraCore = false
++
++func chimeraConfig(cfg *Config) {}
+diff --git a/src/util_desktop.go b/src/util_desktop.go
+index ebd02a8..c8be413 100644
+--- a/src/util_desktop.go
++++ b/src/util_desktop.go
+@@ -1,4 +1,4 @@
+-//go:build !raw && !android
++//go:build !raw && !android && !chimera
+ 
+ package main
+ 

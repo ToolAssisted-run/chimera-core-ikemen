@@ -1,0 +1,18 @@
+diff --git a/src/runtime/rand.go b/src/runtime/rand.go
+index d2ad7aa..974edcf 100644
+--- a/src/runtime/rand.go
++++ b/src/runtime/rand.go
+@@ -42,7 +42,12 @@ func randinit() {
+ 	}
+ 
+ 	seed := &globalRand.seed
+-	if len(startupRand) >= 16 &&
++	// Chimera: one seed in every run and in both builds (hash seeds, map
++	// order, select's choices and math/rand's default source all come from
++	// it), so that what a run does depends on its inputs alone.
++	if true {
++		copy(seed[:], "chimera core: one seed, always.")
++	} else if len(startupRand) >= 16 &&
+ 		// Check that at least the first two words of startupRand weren't
+ 		// cleared by any libc initialization.
+ 		!allZero(startupRand[:8]) && !allZero(startupRand[8:16]) {

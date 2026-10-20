@@ -1,0 +1,71 @@
+diff --git a/src/runtime/malloc.go b/src/runtime/malloc.go
+index 8c5ec383..4506af58 100644
+--- a/src/runtime/malloc.go
++++ b/src/runtime/malloc.go
+@@ -147,7 +147,7 @@ const (
+ 	//   windows/32       | 4KB        | 3
+ 	//   windows/64       | 8KB        | 2
+ 	//   plan9            | 4KB        | 3
+-	_NumStackOrders = 4 - goarch.PtrSize/4*goos.IsWindows - 1*goos.IsPlan9
++	_NumStackOrders = 4 - goarch.PtrSize/4*goos.IsWindows - 1*goos.IsPlan9  - 3*goos.IsLinux // miniBox: the 32 KiB smallest stack fills a 32 KiB stack-cache span
+ 
+ 	// heapAddrBits is the number of bits in a heap address. On
+ 	// amd64, addresses are sign-extended beyond heapAddrBits. On
+diff --git a/src/runtime/os_minibox_linux.go b/src/runtime/os_minibox_linux.go
+new file mode 100644
+index 00000000..3e5feb9a
+--- /dev/null
++++ b/src/runtime/os_minibox_linux.go
+@@ -0,0 +1,25 @@
++// miniBox: goroutine stacks come from the heap; the sandbox has to be told
++// they are stacks (mmap with MAP_STACK), as OpenBSD does, or on Windows the
++// first push onto a page it is watching for writes ends the process.
++
++package runtime
++
++import "unsafe"
++
++const _MAP_STACK_MINIBOX = 0x20000
++
++func osStackAlloc(s *mspan) {
++	osStackRemap(s, _MAP_STACK_MINIBOX)
++}
++
++func osStackFree(s *mspan) {
++	osStackRemap(s, 0)
++}
++
++func osStackRemap(s *mspan, flags int32) {
++	a, err := mmap(unsafe.Pointer(s.base()), s.npages*pageSize, _PROT_READ|_PROT_WRITE, _MAP_PRIVATE|_MAP_ANON|_MAP_FIXED|flags, -1, 0)
++	if err != 0 || uintptr(a) != s.base() {
++		print("runtime: remapping stack memory ", hex(s.base()), " ", s.npages*pageSize, " a=", a, " err=", err, "\n")
++		throw("remapping stack memory failed")
++	}
++}
+diff --git a/src/runtime/os_nonopenbsd.go b/src/runtime/os_nonopenbsd.go
+index a5775961..16451757 100644
+--- a/src/runtime/os_nonopenbsd.go
++++ b/src/runtime/os_nonopenbsd.go
+@@ -2,7 +2,7 @@
+ // Use of this source code is governed by a BSD-style
+ // license that can be found in the LICENSE file.
+ 
+-//go:build !openbsd
++//go:build !openbsd && !linux
+ 
+ package runtime
+ 
+diff --git a/src/runtime/stack.go b/src/runtime/stack.go
+index 83809006..2d7f24af 100644
+--- a/src/runtime/stack.go
++++ b/src/runtime/stack.go
+@@ -72,7 +72,8 @@ const (
+ 	// to each stack below the usual guard area for OS-specific
+ 	// purposes like signal handling. Used on Windows, Plan 9,
+ 	// and iOS because they do not use a separate stack.
+-	stackSystem = goos.IsWindows*4096 + goos.IsPlan9*512 + goos.IsIos*goarch.IsArm64*1024
++	stackSystem = goos.IsWindows*4096 + goos.IsPlan9*512 + goos.IsIos*goarch.IsArm64*1024 +
++		goos.IsLinux*16384 // miniBox: Windows handles a fault on the faulting stack
+ 
+ 	// The minimum size of stack used by Go code
+ 	stackMin = 2048
