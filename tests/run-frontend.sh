@@ -157,6 +157,30 @@ else
 	report "window:project" FAIL "status $(meta gui status) $(meta gui detail); $(cat "$work/gui.pic" 2>/dev/null) (build/frontend/gui.log)"
 fi
 
+# the game's properties through Chimera's Lua library, in a fight: VS Mode,
+# Kung Fu Man against Kung Fu Man, run to frame 1920 (the fight on, no blow
+# yet), then player 1's life and player 2's power set and read back
+mkdir -p "$work/fight"
+cp "$game" "$work/fight/"
+python3 "$here/make-project.py" "$pkg" "$work/fight/fight.chimeraProject" 1930 \
+	"press=P1 Start:400:6" "press=P1 Down:480:3" "press=P1 A:520:3" "press=P1 A:640:3" "press=P2 A:700:3" \
+	"press=P1 A:780:3" "press=P1 A:860:3" "press=P2 A:920:3" "press=P1 A:1000:3" "press=P1 A:1080:3" \
+	"press=P1 A:1160:3" "press=P1 A:1620:3" "press=P1 A:1680:3" "press=P1 A:1740:3" \
+	-- "game=$work/fight/$(basename "$game")"
+mkdir -p "$work/props"
+printf 'frames=1920\nmeta=%s\n' "$work/props/meta.txt" > "$work/props/job.txt"
+( cd "$work" && MINIHAWK_JOB="$work/props/job.txt" timeout 1800 mono "$emu_exe" --headless "--config=$config" \
+	"--core=$pkg" "--project=$work/fight/fight.chimeraProject" "--lua=$here/props.lua" ) > "$work/props.log" 2>&1
+pm() { sed -n "s/^$1=//p" "$work/props/meta.txt" 2>/dev/null; }
+if [ "$(pm status)" = OK ] && [ "$(pm count)" = 23 ] && [ "$(pm 'get.Match.Round State')" = 2 ] && [ "$(pm 'get.Player.Present\[1\]')" = true ] &&
+   [ "$(pm 'get.Player.Present\[3\]')" = false ] && [ "$(pm 'get.Player.Life\[1\]')" = "$(pm 'get.Player.Life Max\[1\]')" ] &&
+   [ "$(pm set.life)" = true ] && [ "$(pm 'after.Player.Life\[1\]')" = 123 ] && [ "$(pm 'after.Player.Power\[2\]')" = 2500 ] &&
+   [ "$(pm set.max)" = false ] && [ "$(pm 'after.Player.Life Max\[1\]')" = "$(pm 'get.Player.Life Max\[1\]')" ]; then
+	report "window:properties" PASS "in the fight (round state 2), $(pm count) properties: P1's life $(pm 'get.Player.Life\[1\]') of $(pm 'get.Player.Life Max\[1\]'), set to 123 and P2's power to 2500, read back so a frame later; Life Max is not writable"
+else
+	report "window:properties" FAIL "$(tr '\n' ' ' < "$work/props/meta.txt" 2>/dev/null) (build/frontend/props.log)"
+fi
+
 # the bindings the package ships become the frontend's defaults
 python3 "$here/forget-controller.py" "$config" "$work/config.keys.ini" "Ikemen GO"
 gui keys "$work/config.keys.ini" "$work/proj/test.chimeraProject" 1

@@ -150,6 +150,7 @@ func frameEnd() {
 		chimera.sound[2*i] = floatToS16(l)
 		chimera.sound[2*i+1] = floatToS16(r)
 	}
+	publishState()
 	if g := fsGeneration(); g != chimera.saveGen {
 		chimera.saveGen = g
 		publishSaveData()
@@ -158,6 +159,7 @@ func frameEnd() {
 	chimera.frame = uint64(next)
 	chimeraClock = chimera.start + int64(chimera.frame)*1000000000/int64(chimera.fps)
 
+	applyPokes()
 	C.chimera_inputs((*C.uint8_t)(unsafe.Pointer(&chimera.buttons[0])), (*C.int32_t)(unsafe.Pointer(&chimera.axes[0])))
 	sendControls()
 }
