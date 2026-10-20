@@ -1,0 +1,36 @@
+diff --git a/src/time/chimera_clock.go b/src/time/chimera_clock.go
+new file mode 100644
+index 00000000..d66d4f7a
+--- /dev/null
++++ b/src/time/chimera_clock.go
+@@ -0,0 +1,15 @@
++// Chimera: the time a program reads with Now is the machine's.
++
++package time
++
++import _ "unsafe" // for go:linkname
++
++// chimeraClock is the machine's time, in nanoseconds since 1970 UTC. The
++// core sets it, and moves it with the frames; until then it is the first of
++// January 2000. Now reads it in both of the core's builds, so a game's
++// clock - and a random seed taken from it - is part of the machine, the same
++// in every run. The runtime's own clock, which timers, sleeps and the
++// scheduler use, is not this one.
++var chimeraClock int64 = 946684800 * 1000000000
++
++//go:linkname chimeraClock
+diff --git a/src/time/time.go b/src/time/time.go
+index ca53848a..017256ac 100644
+--- a/src/time/time.go
++++ b/src/time/time.go
+@@ -1345,6 +1345,10 @@ var startNano int64 = runtimeNano() - 1
+ 
+ // Now returns the current local time.
+ func Now() Time {
++	if true {
++		// Chimera: the machine's time (chimera_clock.go)
++		return unixTime(chimeraClock/1000000000, int32(chimeraClock%1000000000))
++	}
+ 	sec, nsec, mono := runtimeNow()
+ 	if mono == 0 {
+ 		return Time{uint64(nsec), sec + unixToInternal, Local}

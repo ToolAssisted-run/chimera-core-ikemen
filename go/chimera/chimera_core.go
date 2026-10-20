@@ -22,6 +22,8 @@ import "C"
 import (
 	"fmt"
 	"os"
+	"strings"
+	"time"
 	"runtime"
 	"runtime/debug"
 	"unsafe"
@@ -32,9 +34,16 @@ import (
 // chimeraCore is true in this build: what Ikemen GO's patched files ask.
 const chimeraCore = true
 
+// the machine's time that time.Now reads (go-patches/common/0003), in
+// nanoseconds since 1970
+//
+//go:linkname chimeraClock time.chimeraClock
+var chimeraClock int64
+
 var chimera struct {
 	fps     int
 	frame   uint64 // the frame being made
+	start   int64  // the Starting Clock setting, in nanoseconds since 1970
 	sent    [C.CHIMERA_BUTTONS]uint8
 	buttons [C.CHIMERA_BUTTONS]uint8
 	axes    [C.CHIMERA_AXES]int32
@@ -76,6 +85,12 @@ func chimeraMain() {
 	if chimera.fps < 1 {
 		chimera.fps = 60
 	}
+	chimera.start = int64(C.chimera_setting_long(C.CString("startTime"), 946684800)) * 1000000000
+	chimeraClock = chimera.start
+	// Ikemen GO seeds its random numbers from the clock as it starts (sys's
+	// initialiser, before any setting could be read): again, from the
+	// Starting Clock, the way it does it
+	sys.randseed = int32(time.Now().UnixNano())
 	defer func() {
 		if r := recover(); r != nil {
 			chimeraFail(fmt.Sprintf("Ikemen GO stopped: %v\n%s", r, debug.Stack()))
@@ -131,6 +146,7 @@ func frameEnd() {
 	}
 	next := C.chimera_frame_end((*C.int16_t)(unsafe.Pointer(&chimera.sound[0])), C.int(n))
 	chimera.frame = uint64(next)
+	chimeraClock = chimera.start + int64(chimera.frame)*1000000000/int64(chimera.fps)
 
 	C.chimera_inputs((*C.uint8_t)(unsafe.Pointer(&chimera.buttons[0])), (*C.int32_t)(unsafe.Pointer(&chimera.axes[0])))
 	sendControls()
@@ -229,10 +245,20 @@ func chimeraConfig(cfg *Config) {
 	cfg.Sound.SampleRate = C.CHIMERA_RATE
 	// the music is read as it plays, never by a goroutine of its own
 	cfg.Sound.BGMRAMBuffer = false
+	// nothing is loaded beside the frames (patch 0006 makes the rest wait)
+	cfg.Config.BootLoadingMode = 0
+	cfg.Config.VsScreenLoading = false
+	cfg.Config.TurnsLoading = false
+	if cfg.Joystick == nil {
+		cfg.Joystick = map[string]*KeysProperties{}
+	}
 	for p := 1; p <= C.CHIMERA_PLAYERS; p++ {
-		key := fmt.Sprintf("Joystick_P%d", p)
-		if cfg.Joystick == nil {
-			cfg.Joystick = map[string]*KeysProperties{}
+		// Ikemen GO looks its sections up in lower case
+		key := fmt.Sprintf("joystick_p%d", p)
+		for k := range cfg.Joystick {
+			if strings.EqualFold(k, key) {
+				delete(cfg.Joystick, k)
+			}
 		}
 		cfg.Joystick[key] = chimeraPadConfig(p)
 	}

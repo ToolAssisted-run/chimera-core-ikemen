@@ -1,0 +1,8 @@
+# go-gl asks pkg-config for OpenGL. The core's OpenGL is the Mesa it links
+# itself (link-core.sh), and its functions are found through the core's own
+# glXGetProcAddress, so this says: nothing to add.
+Name: gl
+Description: the Chimera core's own OpenGL (Mesa llvmpipe, linked by link-core.sh)
+Version: 4.5
+Cflags:
+Libs:

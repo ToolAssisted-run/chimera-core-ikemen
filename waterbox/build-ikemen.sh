@@ -64,6 +64,8 @@ export GOPATH="${CHIMERA_GOPATH:-$root/build/gopath}" GOCACHE="$root/build/gocac
 )
 
 kit="-I$minibox/source/guest/include -I$minibox/extern/jsmn -I$mesa_inc -I$xmp/include"
+# go-gl asks pkg-config for OpenGL: the answer is the core's own (pkgconfig/gl.pc)
+export PKG_CONFIG_PATH="$here/pkgconfig" PKG_CONFIG_LIBDIR="$here/pkgconfig"
 if [ "$flavour" = native ]; then
 	export CC=gcc
 	export CGO_CFLAGS="-O2 -fcf-protection=none -I$here/native-shim $kit"
@@ -76,7 +78,8 @@ exec gcc -specs=$sr/lib/musl-gcc.specs -mno-red-zone -fno-stack-protector -mstac
 CC
 	chmod +x "$out/guest-cc"
 	export CC="$out/guest-cc"
-	export CGO_CFLAGS="-O2 -DCHIMERA_GUEST -I$minibox/extern/emulibc $kit"
+	# guest-compat: the X11 types Mesa's glx.h names (go-gl includes it)
+	export CGO_CFLAGS="-O2 -DCHIMERA_GUEST -I$minibox/extern/emulibc -I$here/guest-compat $kit"
 fi
 export CGO_LDFLAGS="-L$xmp/lib"
 export CGO_ENABLED=1

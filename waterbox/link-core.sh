@@ -47,6 +47,14 @@ mesa_parts() {
 }
 
 case "$flavour" in
+	native | guest)
+		# checked here: an exit inside $(...) below would only leave the subshell
+		for need in "$root/build/$flavour/libikemen.a" "$root/build/libxmp-$flavour/lib/libxmp.a" "$root/build/llvm-$flavour/.chimera-built"; do
+			[ -e "$need" ] || { echo "link-core: $need is missing (build it first)" >&2; exit 1; }
+		done
+		;;
+esac
+case "$flavour" in
 	native)
 		out="$root/build/native"
 		mkdir -p "$out"

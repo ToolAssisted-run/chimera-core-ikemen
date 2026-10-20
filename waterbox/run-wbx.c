@@ -24,7 +24,7 @@
 #include "gate-harness.h"
 
 /* matches waterbox.config memoryLayoutMiB: sbrk, sealed, invisible, plain, mmap */
-#define LAYOUT_MIB 1024, 16, 16, 16, 4096
+#define LAYOUT_MIB 1024, 16, 16, 16, 6144
 
 typedef struct { FILE *f; } freader;
 static intptr_t file_read(uintptr_t ud, uint8_t *d, uintptr_t s) { return (intptr_t)fread(d, 1, s, ((freader *)ud)->f); }

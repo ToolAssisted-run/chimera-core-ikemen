@@ -1,0 +1,32 @@
+diff --git a/src/system.go b/src/system.go
+index 9a4dddd..3ca7a1d 100644
+--- a/src/system.go
++++ b/src/system.go
+@@ -6669,6 +6669,27 @@ func (l *Loader) runTread() bool {
+ 	l.cancelCh = make(chan struct{})
+ 	l.cancelOnce = sync.Once{}
+ 	l.state = LS_Loading
++	if chimeraCore {
++		// The Chimera core loads before the next frame, never beside the
++		// frames: how far a loader in the background got by a given frame
++		// would depend on the computer's speed. The loader still runs on a
++		// goroutine of its own; this one, the main thread, runs the OpenGL
++		// work it queues, in the order it queues it, and waits for the end.
++		done := make(chan struct{})
++		SafeGo(func() {
++			defer close(done)
++			l.load()
++		})
++		for {
++			select {
++			case f := <-sys.mainThreadTask:
++				f()
++			case <-done:
++				sys.runMainThreadTask()
++				return true
++			}
++		}
++	}
+ 	SafeGo(func() {
+ 		l.load()
+ 	})

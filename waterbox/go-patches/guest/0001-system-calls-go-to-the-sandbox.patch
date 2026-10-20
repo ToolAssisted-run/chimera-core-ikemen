@@ -355,11 +355,13 @@ new file mode 100644
 index 00000000..564c3b30
 --- /dev/null
 +++ b/src/runtime/sys_minibox_linux.go
-@@ -0,0 +1,10 @@
+@@ -0,0 +1,12 @@
 +// miniBox: the system calls of the runtime and of package syscall go to the
 +// sandbox (sys_minibox_linux_amd64.s).
 +
 +package runtime
++
++import _ "unsafe" // for go:linkname
 +
 +// mbsyscall is called from the assembly of package syscall and of
 +// internal/runtime/syscall/linux as well.
