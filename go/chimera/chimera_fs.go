@@ -24,6 +24,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"embed"
+	"fmt"
 	"io"
 	"io/fs"
 	"path"
@@ -246,6 +247,63 @@ func fsStart(zipName string) error {
 	}
 	chimeraFS = fsCall
 	return nil
+}
+
+// fsSeedSaveData puts the project's save data in the game's folder before
+// the game starts: a zip with its folders (what Export Save Data makes of
+// several files), or a single file, which goes into save/. A name in a zip
+// that is not a plain relative path refuses the lot.
+func fsSeedSaveData(names []string) error {
+	fsys.Lock()
+	defer fsys.Unlock()
+	for _, name := range names {
+		fd, size, err := hostOpen(name)
+		if err != nil {
+			return fmt.Errorf("%s: %v", name, err)
+		}
+		data := make([]byte, size)
+		if _, err := (hostReader{fd}).ReadAt(data, 0); err != nil && err != io.EOF {
+			return fmt.Errorf("%s: %v", name, err)
+		}
+		syscall.RawSyscall(syscall.SYS_CLOSE, fd, 0, 0)
+		if !strings.EqualFold(path.Ext(name), ".zip") {
+			addSaved("save/"+path.Base(name), data)
+			continue
+		}
+		zr, err := zip.NewReader(bytes.NewReader(data), size)
+		if err != nil {
+			return fmt.Errorf("%s: %v", name, err)
+		}
+		for _, f := range zr.File {
+			if f.FileInfo().IsDir() {
+				continue
+			}
+			clean := path.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
+			if path.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, "../") {
+				return fmt.Errorf("%s: %q is not a name inside the game's folder", name, f.Name)
+			}
+			rc, err := f.Open()
+			if err != nil {
+				return fmt.Errorf("%s: %s: %v", name, f.Name, err)
+			}
+			b, err := io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				return fmt.Errorf("%s: %s: %v", name, f.Name, err)
+			}
+			addSaved(clean, b)
+		}
+	}
+	return nil
+}
+
+// addSaved puts a file of the save data in the tree, over any of the game's.
+func addSaved(p string, data []byte) {
+	addFile(p, data, nil, false)
+	if n := walk(cleanPath(p), false); n != nil {
+		n.modified = true
+		fsys.gen++
+	}
 }
 
 // ---- the calls ----------------------------------------------------------------

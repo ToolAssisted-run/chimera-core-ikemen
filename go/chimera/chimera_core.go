@@ -97,12 +97,22 @@ func chimeraMain() {
 		}
 	}()
 
+	// the project's game slot names the zip; without a project (a movie run
+	// with a game file) Chimera mounts it as "game" (waterbox.config romFile)
 	var name [1024]C.char
-	if C.chimera_slot(C.CString("game"), 0, &name[0], C.int(len(name))) == 0 {
-		chimeraFail("the project has no game: give the zip of an Ikemen GO game folder")
+	game := "game"
+	if C.chimera_slot(C.CString("game"), 0, &name[0], C.int(len(name))) != 0 {
+		game = C.GoString(&name[0])
 	}
-	if err := fsStart(C.GoString(&name[0])); err != nil {
-		chimeraFail(fmt.Sprintf("the game's zip (%s) could not be read: %v", C.GoString(&name[0]), err))
+	if err := fsStart(game); err != nil {
+		chimeraFail(fmt.Sprintf("the game's zip (%s) could not be read: %v (give the zip of an Ikemen GO game folder)", game, err))
+	}
+	var saves []string
+	for i := 0; C.chimera_slot(C.CString("savedata"), C.int(i), &name[0], C.int(len(name))) != 0; i++ {
+		saves = append(saves, C.GoString(&name[0]))
+	}
+	if err := fsSeedSaveData(saves); err != nil {
+		chimeraFail("the project's save data could not be used: " + err.Error())
 	}
 
 	// the players' controllers are connected from the start

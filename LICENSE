@@ -1,0 +1,53 @@
+MIT License
+
+Copyright (c) 2026 Sergio Martin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+What this license covers, and what the built core contains
+
+The license above covers this repository's own code: the glue in go/chimera,
+the stand-in packages in go/sdl2 and go/reisen, the patches, the scripts in
+waterbox/ and tools/, and the documents.
+
+The core package built from it (ikemen.chimeraCore) also contains, each under
+its own terms (the package's licenses/ folder holds every text):
+
+- Ikemen GO 1.0.0 (MIT), compiled from the submodule extern/Ikemen-GO with
+  patches/ applied, and its engine files (data/, external/, font/) carried
+  inside the core;
+- the Go 1.27.3 runtime and standard library (BSD-3-Clause), with
+  waterbox/go-patches applied;
+- the Go modules Ikemen GO is built from (MIT, BSD, Apache-2.0, the FreeType
+  License and the Unlicense; build/licenses/go-modules.txt when packaged);
+- libxmp 4.7.4 (MIT), which plays module music;
+- Mesa 24.0.9 (MIT), whose llvmpipe driver behind OSMesa is the OpenGL the
+  game draws with, with waterbox/mesa-patches applied;
+- LLVM 18.1.8 (Apache-2.0 with the LLVM exception), which llvmpipe compiles
+  shaders with;
+- musl and the miniBox guest kit (MIT).
+
+The package carries no game and no screenpack: the project brings the game
+folder as a zip. The test game the scripts make (tests/make-test-game.sh) is
+the Ikemen GO screenpack from the submodule extern/Ikemen-GO-Screenpack; most
+of it is CC BY 3.0, and Elecbyte's part of it (Kung Fu Man, two stages and the
+MUGEN fonts) is under Elecbyte's own non-commercial terms. It is never part of
+the package.

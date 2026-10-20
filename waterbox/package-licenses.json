@@ -1,0 +1,64 @@
+{
+  "package": "ikemen",
+  "effectiveTerms": "MIT for Ikemen GO and for this core; BSD-3-Clause for the Go runtime; the Go modules inside under their own permissive licences (MIT, BSD, Apache-2.0, the FreeType License, the Unlicense), with their texts in go-modules.txt; MIT for libxmp and Mesa; Apache-2.0 with the LLVM exception for LLVM",
+  "commercialUse": "allowed",
+  "note": "The built core combines this repository's code (MIT): the glue in go/chimera, the stand-ins for SDL 2's and FFmpeg's Go bindings in go/sdl2 and go/reisen, and the build scripts; Ikemen GO (MIT), compiled from the submodule extern/Ikemen-GO (v1.0.0) as a C archive with this repository's patches/ applied, with its engine files (data/, external/, font/) inside; the Go runtime and standard library (BSD-3-Clause, Go 1.27.3 with waterbox/go-patches applied); the Go modules Ikemen GO imports, each under the licence go-modules.txt gives (golang/freetype under the FreeType License: portions of this software are copyright The FreeType Project, www.freetype.org); libxmp (MIT); Mesa (MIT), whose llvmpipe driver behind OSMesa is the OpenGL Ikemen GO draws with (waterbox/mesa-patches applied); and LLVM (Apache-2.0 with the LLVM exception), which llvmpipe compiles shaders with. The package carries no game: the project brings the game folder as a zip.",
+  "components": [
+    {
+      "name": "chimera-core-ikemen (the glue, the stand-in packages and the build)",
+      "license": "MIT",
+      "url": "https://github.com/ToolAssisted-run/chimera-core-ikemen",
+      "commit": "{selfCommit}",
+      "file": "LICENSE",
+      "sourceUrl": "https://github.com/ToolAssisted-run/chimera-core-ikemen/archive/{commit}.tar.gz"
+    },
+    {
+      "name": "Ikemen GO",
+      "license": "MIT",
+      "url": "https://github.com/ikemen-engine/Ikemen-GO",
+      "commit": "{submodule:extern/Ikemen-GO}",
+      "file": "extern/Ikemen-GO/LICENCE.txt",
+      "sourceUrl": "https://github.com/ikemen-engine/Ikemen-GO/archive/{commit}.tar.gz"
+    },
+    {
+      "name": "The Go runtime and standard library",
+      "license": "BSD-3-Clause",
+      "url": "https://go.dev",
+      "version": "1.27.3",
+      "file": "build/go-guest/LICENSE",
+      "sourceUrl": "https://go.dev/dl/go1.27.3.src.tar.gz"
+    },
+    {
+      "name": "The Go modules compiled into Ikemen GO, with each licence's text",
+      "license": "Various permissive licences (see the file)",
+      "url": "https://github.com/ikemen-engine/Ikemen-GO/blob/master/go.mod",
+      "commit": "{submodule:extern/Ikemen-GO}",
+      "file": "build/licenses/go-modules.txt",
+      "sourceUrl": "https://github.com/ikemen-engine/Ikemen-GO/archive/{commit}.tar.gz"
+    },
+    {
+      "name": "libxmp (module music)",
+      "license": "MIT",
+      "url": "https://github.com/libxmp/libxmp",
+      "version": "4.7.4",
+      "file": "build/libxmp-src/docs/COPYING",
+      "sourceUrl": "https://github.com/libxmp/libxmp/releases/download/libxmp-4.7.4/libxmp-4.7.4.tar.gz"
+    },
+    {
+      "name": "Mesa (llvmpipe + OSMesa, the core's OpenGL)",
+      "license": "MIT",
+      "url": "https://gitlab.freedesktop.org/mesa/mesa",
+      "version": "24.0.9",
+      "file": "build/mesa/docs/license.rst",
+      "sourceUrl": "https://archive.mesa3d.org/mesa-24.0.9.tar.xz"
+    },
+    {
+      "name": "LLVM (the compiler llvmpipe makes the shaders' code with)",
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "url": "https://github.com/llvm/llvm-project",
+      "version": "18.1.8",
+      "file": "waterbox/licenses/LLVM-LICENSE.TXT",
+      "sourceUrl": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/llvm-project-18.1.8.src.tar.xz"
+    }
+  ]
+}

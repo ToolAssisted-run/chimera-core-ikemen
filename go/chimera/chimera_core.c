@@ -291,3 +291,10 @@ ECL_EXPORT const uint8_t *GetSaveDataFileBuffer(int32_t i)
 {
 	return i >= 0 && i < nsaves ? (const uint8_t *)saves[i].data : NULL;
 }
+
+/* No memory domains yet: the game's state lives on Go's heap. */
+ECL_EXPORT int GetMemoryDomainCount(void) { return 0; }
+ECL_EXPORT const char *GetMemoryDomainName(int i) { (void)i; return ""; }
+ECL_EXPORT uint8_t *GetMemoryDomainPtr(int i) { (void)i; return NULL; }
+ECL_EXPORT int64_t GetMemoryDomainSize(int i) { (void)i; return 0; }
+ECL_EXPORT int GetMemoryDomainWritable(int i) { (void)i; return 0; }
