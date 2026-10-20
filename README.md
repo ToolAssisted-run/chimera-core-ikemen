@@ -22,7 +22,11 @@ Built and tested on this machine; not published. Chimera issue 324.
   with Kung Fu Man) from boot through VS Mode to a fight, and this
   repository's probe. The sandboxed core and a plain native build agree on
   every picture, the sound and every step; savestates land where the
-  straight run does. No other game has been tried yet.
+  straight run does; Chimera on Linux and on Windows draws the same
+  pictures. No other game has been tried yet.
+- The game's state is named for Chimera's tools (RAM Watch, freezes, Lua's
+  `game.*`): the round, its time, the random seed, and each fighter's life,
+  power, position, state and gauges, most of them writable.
 - Not there: background videos (the core has no FFmpeg; a video is skipped,
   as Ikemen GO skips one it cannot read), netplay, the Vulkan renderer, the
   GPU. A 1280x720 game runs at about 7 to 10 frames a second on a fast

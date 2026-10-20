@@ -208,3 +208,26 @@ numbers on player 1's side).
 - A state of the screenpack game is about 610 MB: the 720p motif's pictures,
   decoded by Go (about 230 MB live on its heap) and held again by Mesa as
   textures.
+- waterbox/run-gate.sh: 31 passed, 0 failed, in 12.5 minutes. Every new
+  test was broken on purpose once: the clock frozen, player 1's A and B
+  swapped, turbo ignored and Export Save Data emptied, all at once, failed
+  exactly the clock, controls, turbo and save data tests (27 passed, 4
+  failed); the teeth test is the comparison's own control.
+- tests/run-frontend.sh against Chimera a11b398: 6 ok, 0 failed. chimera-run
+  from a movie file and from a project, and Chimera's window under Mono on
+  Xvfb, draw the native reference's title menu at frame 459 to the pixel; in
+  a fight (frame 1920) the properties read player 1's life 1000 of 1000, and
+  setting it to 123 and player 2's power to 2500 reads back a frame later;
+  Life Max refuses a write. With the write back switched off, that test
+  failed (the life stayed 1000).
+- Chimera's contract tests on the package: 22 passed (21 with one binding
+  broken on purpose, which the failing test named).
+- Windows: the package in the published Windows build of Chimera
+  (Development build d498b8bb), headless with a configuration of its own:
+  the title menu at frame 459 and the fight at frame 1929 are the Linux
+  native reference's pictures to the pixel, and the properties test gives
+  the same answers (life 123, power 2500, Life Max not writable). 460 frames
+  took 57 s.
+- A state of the probe (no motif loaded) is 32 MB; of the screenpack game,
+  643 MB.
+
