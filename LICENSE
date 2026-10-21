@@ -34,10 +34,16 @@ its own terms (the package's licenses/ folder holds every text):
 - Ikemen GO 1.0.0 (MIT), compiled from the submodule extern/Ikemen-GO with
   patches/ applied, and its engine files (data/, external/, font/) carried
   inside the core;
+- the common effects of Ikemen GO's screenpack, data/gofx (CC BY 3.0: the
+  dizzy, guard break and tag switch effects by Shiyo Kakuge), carried inside
+  the core from the submodule extern/Ikemen-GO-Screenpack;
+- four of Ikemen GO's modules (MIT): Boss Rush, Score Challenge, Time
+  Challenge and VS 100 Kumite, from the submodule extern/Ikemen-GO-modules;
 - the Go 1.27.3 runtime and standard library (BSD-3-Clause), with
   waterbox/go-patches applied;
 - the Go modules Ikemen GO is built from (MIT, BSD, Apache-2.0, the FreeType
-  License and the Unlicense; build/licenses/go-modules.txt when packaged);
+  License and the Unlicense; build/licenses/go-modules.txt when packaged),
+  go-mp3 with patches/go-mp3 applied;
 - libxmp 4.7.4 (MIT), which plays module music;
 - Mesa 24.0.9 (MIT), whose llvmpipe driver behind OSMesa is the OpenGL the
   game draws with, with waterbox/mesa-patches applied;
@@ -45,14 +51,14 @@ its own terms (the package's licenses/ folder holds every text):
   shaders with;
 - FFmpeg 7.1.5 (LGPL-2.1-or-later, built without its GPL parts) and libvpx
   1.15.2 (BSD-3-Clause, with Google's patent grant), which play background
-  videos. FFmpeg is linked in statically; its source is the unmodified
+  videos and music in a format Ikemen GO has no decoder for. FFmpeg is linked in statically; its source is the unmodified
   release, and this repository's source and scripts
   (waterbox/build-ffmpeg.sh, waterbox/link-core.sh) build the core again with
   a changed FFmpeg, as the LGPL asks;
 - musl and the miniBox guest kit (MIT).
 
-The package carries no game and no screenpack: the project brings the game
-folder as a zip. The test game the scripts make (tests/make-test-game.sh) is
+The package carries no game and no screenpack (only the screenpack's
+data/gofx): the project brings the game folder as a zip. The test game the scripts make (tests/make-test-game.sh) is
 the Ikemen GO screenpack from the submodule extern/Ikemen-GO-Screenpack; most
 of it is CC BY 3.0, and Elecbyte's part of it (Kung Fu Man, two stages and the
 MUGEN fonts) is under Elecbyte's own non-commercial terms. It is never part of

@@ -8,6 +8,9 @@ Linux and on Windows.
 - gcc and g++ (14 was used), binutils, make, cmake, ninja, meson, python3
   with `mako` and `packaging` for Mesa (setup-mesa.sh makes a private venv
   when the system's meson lacks them), curl, git, xz, patch.
+- For the tests: ffmpeg (the media test game is made with it, and the media
+  check compares with its decoding), and mpcenc (Debian's `musepack-tools`)
+  for the Musepack test, which is skipped without it.
 - A Chimera checkout with miniBox built, for the sandbox's toolchain and host:
 
       mb=<chimera>/extern/chimera-common-minibox
@@ -21,9 +24,11 @@ Linux and on Windows.
 
 ## Sources
 
-- `extern/Ikemen-GO` (v1.0.0) and `extern/Ikemen-GO-Screenpack` (the commit
-  of 2026-09-11, what 1.0.0 shipped with) are submodules:
-  `git submodule update --init`.
+- `extern/Ikemen-GO` (v1.0.0), `extern/Ikemen-GO-Screenpack` (the commit of
+  2026-09-11, what 1.0.0 shipped with) and `extern/Ikemen-GO-modules` (the
+  commit of 2026-06-05) are submodules: `git submodule update --init`.
+  `tests/make-legacy-game.sh` takes files from two older commits of the
+  first and the last, and fetches them when a shallow checkout lacks them.
 - Go 1.27.3, LLVM 18.1.8, Mesa 24.0.9, libxmp 4.7.4, FFmpeg 7.1.5 and
   libvpx 1.15.2 are release tarballs fetched into `build/deps` by the
   scripts, each checked against a pinned SHA-256. `CHIMERA_DEPS_DIR` points
@@ -75,9 +80,22 @@ that it is the same file.
         <chimera>/source/gui/Chimera.Tests.Client.Common/Chimera.Tests.Client.Common.csproj \
         -c Release --filter "FullyQualifiedName~InstalledCorePackagesTests|FullyQualifiedName~MnemonicUniquenessTests"
 
-`run-gate.sh` makes the three test games (`tests/make-test-game.sh`,
-`tests/make-probe.sh`, `tests/make-video-probe.sh`) and compares the native reference with the sandbox;
-it says what each test compared. `run-frontend.sh` builds the package and
+`run-gate.sh` makes the test games (`tests/make-test-game.sh`,
+`tests/make-probe.sh`, `tests/make-video-probe.sh`,
+`tests/make-legacy-game.sh`, `tests/make-media-game.sh`) and the media
+check's test builds (`CHIMERA_VARIANT=media` with `build-ikemen.sh` and
+`link-core.sh`, in `build/native-media` and `build/guest-media`), and
+compares the native reference with the sandbox; it says what each test
+compared. With `IKEMEN_KOF_ZIP=<zip>` naming a copy of KOF Special, a fan
+game that may not be shared, it also checks that game (its media, its
+Arcade, a savestate in a fight); without it that test is skipped.
+
+The media check by hand, on any game: run the test build on its folder, natively and
+in the sandbox, and compare:
+
+    build/native-media/run-native <folder> --frames 1 > n.txt
+    build/guest-media/run-wbx build/guest-media/core.wbx <folder> --frames 1 > w.txt
+    tests/media/check-media.py <game.zip> n.txt w.txt `run-frontend.sh` builds the package and
 plays the test game through `chimera-run` and through Chimera's window under
 Mono on Xvfb; it needs Chimera built (its engine installed and its
 interface).

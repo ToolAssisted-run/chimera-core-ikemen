@@ -230,6 +230,8 @@ func fsStart(zipName string) error {
 			addFile(name, nil, f, false)
 		}
 	}
+	// a game made for an older Ikemen GO gives way to the engine's files
+	legacyStart()
 	// the engine's own files, where the game has none
 	err = fs.WalkDir(engineFiles, "chimera_engine", func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {

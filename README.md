@@ -23,12 +23,24 @@ Built and tested on this machine; not published. Chimera issue 324.
   sound) and decoded on each frame, so that every computer shows the same
   pictures and plays the same sound. Tried: VP9 with and without
   transparency, and Opus; VP8 and Vorbis not yet.
+- Games made for an older Ikemen GO (0.97 to 0.99) play too: the core
+  recognizes the older release's own scripts in the game's folder and uses
+  its v1.0 ones instead, as Ikemen GO's upgrade advice says, swaps the old
+  Boss Rush, Score Challenge, Time Challenge and VS 100 Kumite modes for
+  their current versions, and reads the old `save/config.json` settings.
+- Every music file and sound plays as ffmpeg decodes it: OGG, MP3 (also one
+  that ends in junk, which Ikemen GO's decoder used to refuse), FLAC, WAV,
+  tracker modules, and Musepack, which Ikemen GO has no decoder for, through
+  the core's FFmpeg. Ikemen GO's own rule stays: a sound under 128 bytes in
+  a character's sound file is not played.
 - Tried: the Ikemen GO screenpack (the default motif its releases carry,
   with Kung Fu Man) from boot, with its logo video, through VS Mode to a
-  fight, and this repository's two probes (one plays a video with sound). The sandboxed core and a plain native build agree on
-  every picture, the sound and every step; savestates land where the
-  straight run does; Chimera on Linux and on Windows draws the same
-  pictures. No other game has been tried yet.
+  fight; this repository's two probes (one plays a video with sound); and
+  KOF Special, a fan game made for Ikemen GO 0.99 (not shared here): Arcade,
+  Boss Rush and Watch Mode fights, and all its 329 music files and 13,447
+  sounds. The sandboxed core and a plain native build agree on every
+  picture, the sound and every step; savestates land where the straight run
+  does; Chimera on Linux and on Windows draws the same pictures.
 - The game's state is named for Chimera's tools (RAM Watch, freezes, Lua's
   `game.*`): the round, its time, the random seed, and each fighter's life,
   power, position, state and gauges, most of them writable.
@@ -41,7 +53,8 @@ The game: an Ikemen GO game folder (the one holding `chars/`, `stages/`,
 `data/` and the rest, as an Ikemen GO release unpacks), zipped. The zip may
 hold the folder itself or its contents. What the core does not find in it -
 the engine's own `data/`, `external/` and `font/` files - it brings itself,
-from the Ikemen GO it is built with.
+from the Ikemen GO it is built with. A folder made for Ikemen GO 0.97 to 0.99
+is used as it is: the core sets aside the older engine files in it.
 
 ## Buttons and settings
 
@@ -64,7 +77,8 @@ is the design log: what was decided, why, and what was measured.
 
 ## Licence
 
-This repository's own code is MIT, and so is Ikemen GO. Go is BSD-3-Clause;
+This repository's own code is MIT, and so are Ikemen GO and its modules;
+its common effects (`data/gofx`) are CC BY 3.0. Go is BSD-3-Clause;
 the Go modules inside are under their own permissive licences; libxmp and
 Mesa are MIT, LLVM is Apache 2.0 with the LLVM exception; FFmpeg is LGPL 2.1
 (linked statically; this repository builds the core again with a changed

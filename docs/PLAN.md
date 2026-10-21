@@ -162,6 +162,13 @@ the need:
   the OpenGL work it queues, in the order it queues it, and waits for the
   end. Its order is the loader's, so both builds upload the same textures in
   the same order.
+- 0007: background videos are decoded on the frame (see "Background
+  videos").
+- 0008: the music player's choice of decoder is one function, bgmDecode,
+  which gives a file none of Ikemen GO's decoders reads to the core's FFmpeg
+  (see "Older games and every media file").
+- patches/go-mp3/0001, to the MP3 decoder (a Go module): a frame header it
+  cannot decode is looked past instead of failing the file.
 
 ## The game's properties (2026-10-20)
 
@@ -316,3 +323,128 @@ Measured (2026-10-21):
   heap, so the heap grows until Go collects it. The video probe's state is
   96 MB.
 - The package is 38.1 MB (37.0 MB before).
+
+## Older games and every media file (user-decided, 2026-10-21)
+
+The owner gave a game to try, KOF Special, a fan-made King of Fighters game
+for Ikemen GO (1.2 GB, 300 characters; commercial characters, so it stays
+outside this repository and its tests skip without it), and asked that
+"besides working correctly, all media files in that game must play correctly
+before we publish the core".
+
+- **The game was made for Ikemen GO v0.99.0** (October 2023), and its folder
+  carries v0.99.0's own scripts and common files unchanged (only line ends
+  differ). The v1.0 engine cannot run them (`main.lua:56: attempt to call a
+  non-function object`). The owner chose (from: this, a separate v0.99 core,
+  both) to run such games on v1.0, as Ikemen GO's own advice for upgrading a
+  game says: put the new release's files over the old ones.
+- **How the core recognizes an older game (chimera_legacy.go).** Its
+  `external/script/main.lua` is one of the versions Ikemen GO had before
+  v1.0.0. `waterbox/make-legacy-list.py` lists, from extern/Ikemen-GO's
+  history, every older version of the engine's own files a game folder
+  carries (external/script, external/shaders, data/*.zss, data/common.*):
+  1784 versions of 44 files, hashed without carriage returns. Of such a game,
+  every file that is one of them is set aside, so the core's own v1.0 file
+  takes its place; nothing else of the game is touched. A script the game's
+  author changed is no known version and stays (and then likely stops the
+  engine, which says where).
+- **Its modules.** Ikemen GO's modules (external/mods) are Lua the engine
+  loads by itself at start; the 2023 versions the game carries stop v1.0
+  (`bossrush.lua:141: attempt to index a non-table object`). Ikemen GO's
+  modules repository has current versions of Boss Rush, Score Challenge,
+  Time Challenge and VS 100 Kumite (extern/Ikemen-GO-modules, MIT), which
+  take their place in an older game; Rank, which that repository removed in
+  December 2025, is left out. KOF Special's screenpack never turns Rank on
+  (no [Rank Info]), so it did nothing under v0.99 either.
+- **Its settings.** v0.99 kept them in save/config.json, v1.0 in
+  save/config.ini. The core writes the config.ini from v0.99's defaults with
+  the game's config.json over them: the game's size (v0.99's default is
+  640x480, v1.0's 1280x720), its motif, difficulty, rounds, life, team and
+  debug settings and the rest that v1.0 still has. Not carried: what is the
+  core's own (picture, sound rate, controls), the window, networking, and
+  Ratio (a module in v1.0; KOF Special does not name it). v0.99 picks one of
+  its external shaders by number; v1.0 uses every one it lists, so only the
+  picked one is listed. The common files are v1.0's, with whatever the game
+  added to v0.99's list.
+- **The common effects.** v1.0's default settings load `data/gofx/gofx.def`
+  (dizzy birds, guard break and tag effects), and v1.0's own dizzy.zss names
+  them: without them a match does not start (`anim: Invalid data: go`).
+  Ikemen GO's releases take them from the screenpack, so a game made for
+  v0.99 does not have them (it has v0.99's smaller set in data/, which its
+  configuration never loaded). The core carries the screenpack's data/gofx
+  as one of the engine's files (CC BY 3.0, by Shiyo Kakuge).
+- **The media check (tests/media).** A test build of the core (never the
+  package) pulls every music file and every sound of a game's folder
+  through the engine's own playback: the decoder Bgm.Open picks, the SND
+  reader, the looper and the resampler to 44100 Hz, as fast as it goes. It
+  prints, for each, its length, a SHA-1 of the sound and its loudness frame
+  by frame; `check-media.py` compares that between the native build and the
+  sandbox (bit for bit) and with ffmpeg's decoding of the same file (the
+  length, and the loudness frame by frame). What does not agree is looked at
+  again with ffmpeg's decoding resampled the engine's way: Ikemen GO's
+  default resampling (quality 1) draws a straight line between two
+  samples, which dulls the top of a sound recorded at a low rate.
+- **What it found in KOF Special, and what was done.**
+  - `sound/14 Kusanagi Kyo.mp3` did not play at all: a kilobyte of junk
+    after its last frame holds four bytes that look like a free-bitrate
+    frame header, which go-mp3 (Ikemen GO's MP3 decoder) refuses for the
+    whole file; further on, one that looks like a layer 2 header. A patch to
+    go-mp3 (patches/go-mp3, built in its place by build-ikemen.sh) looks
+    past a header it cannot decode, as past any other bytes that are not a
+    header; the file plays to its end, 193.4 s, as ffmpeg plays it. The
+    stage that names it is not in the game's select list.
+  - `data/XIend.mpc` is Musepack, which none of Ikemen GO's decoders reads.
+    Patch 0008 gathers Bgm.Open's choice of decoder in one function and
+    gives a file none of them reads to the core's FFmpeg (chimera_music.go:
+    decoded whole as it opens, kept as 16-bit samples the player loops and
+    seeks); build-ffmpeg.sh adds FFmpeg's Musepack reader and decoders. No
+    file of the game names XIend.def.
+  - 89 sounds in the characters' SND files are one 110-byte placeholder: a
+    valid WAV of a 3 ms click, which MUGEN plays and Ikemen GO (v0.99 and
+    v1.0 alike) leaves out, as it leaves out every sound under 128 bytes.
+    The owner chose to keep Ikemen GO's rule; the check notes them.
+  - `chars/hwajai/snd/f_10_voice/f_10_voice_bnk-0000000027.mp3` is an empty
+    file: it holds no sound to play.
+- **One more trap**: the media check runs in one go inside the core's start,
+  and the sandbox's one thread never gave Go's collector its turn, so the
+  memory of every file stayed taken (out of memory at 5.1 GB, 90% through,
+  while natively 13 MB stayed live). A game's frame ends and lets the
+  collector run; the check collects after each file.
+
+Measured (2026-10-21):
+
+- waterbox/run-gate.sh, with IKEMEN_KOF_ZIP naming a copy of KOF Special:
+  52 passed, 0 failed, 1 skipped, in 27 minutes. Skipped: the Musepack test
+  of the media test game (no mpcenc on this computer; KOF Special's own
+  Musepack file was checked). New: older games (6 tests), media (4), kof
+  special (4, and its media). The comparison of two runs now also asks
+  that both ran to their last frame: two runs that both stopped at the
+  start compare the same and prove nothing.
+- Broken on purpose, three ways in one run (44 passed, 8 failed): the
+  recognition turned off, the go-mp3 patch reduced to a comment, and FFmpeg
+  refusing every music file. Failed: the four older-game tests that look for
+  what the core did and its config.ini, the media test game (junk-end.mp3:
+  "free bitrate format is not supported") and the junk test, KOF Special's
+  media (XIend.mpc and the Kusanagi Kyo MP3) and its recognition. Its Arcade
+  comparison and its savestate passed because both runs had stopped at the
+  start (on v0.99's shader, which v1.0 cannot compile): hence the stricter
+  comparison above.
+- KOF Special, besides the gate: Arcade into the second round, 9000 frames,
+  native = sandbox, and saved at frame 5000 = straight (a state is 421 MB);
+  Watch Mode for 30000 frames (a whole match between two computer players,
+  then the select screen), native = sandbox, the sandbox's process at most
+  2.6 GB (natively 0.56 GB); Boss Rush (the replaced module) to its first
+  fight, against its boss, natively. The game runs at about 29 frames a
+  second at 640x480 in the sandbox.
+- The media check of KOF Special: 329 music files (about 6.3 hours) and
+  13,447 sounds in 3.4 minutes natively and 3.3 in the sandbox; every one the
+  same in both, bit for bit, and as ffmpeg decodes it (18 of the sounds once
+  ffmpeg's decoding is resampled the engine's way), except what the owner
+  kept out and the empty file.
+- tests/run-frontend.sh against Chimera a11b398: 6 ok, 0 failed. Chimera's
+  contract tests on the package: 22 passed.
+- Windows (the published Chimera, Development build d498b8bb, headless): KOF
+  Special's Arcade, the gate's inputs, at frames 1600 (the fight starting)
+  and 4000 (in the first round) is the Linux native build's picture to the
+  pixel. The sound was not compared there.
+- The package is 38.6 MB (38.1 MB before).

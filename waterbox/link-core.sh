@@ -23,11 +23,13 @@ while getopts "m:" opt; do
 done
 [ -n "$minibox" ] || { echo "link-core: pass -m <miniBox checkout>" >&2; exit 2; }
 minibox="$(cd "$minibox" && pwd)"
+# CHIMERA_VARIANT=media links the media check's test build (build-ikemen.sh)
+variant="${CHIMERA_VARIANT:+-$CHIMERA_VARIANT}"
 
 ikemen_libs() {
 	# Ikemen GO and the glue (build-ikemen.sh), whole: the core's calls are in
 	# it and nothing else asks for them; then libxmp and FFmpeg
-	local lib="$root/build/$1/libikemen.a"
+	local lib="$root/build/$1$variant/libikemen.a"
 	local ff="$root/build/ffmpeg-$1/lib"
 	[ -f "$lib" ] || { echo "link-core: no $lib (run build-ikemen.sh $1)" >&2; exit 1; }
 	echo "-Wl,--whole-archive $lib -Wl,--no-whole-archive $root/build/libxmp-$1/lib/libxmp.a"
@@ -51,14 +53,14 @@ mesa_parts() {
 case "$flavour" in
 	native | guest)
 		# checked here: an exit inside $(...) below would only leave the subshell
-		for need in "$root/build/$flavour/libikemen.a" "$root/build/libxmp-$flavour/lib/libxmp.a" "$root/build/ffmpeg-$flavour/lib/libavcodec.a" "$root/build/llvm-$flavour/.chimera-built"; do
+		for need in "$root/build/$flavour$variant/libikemen.a" "$root/build/libxmp-$flavour/lib/libxmp.a" "$root/build/ffmpeg-$flavour/lib/libavcodec.a" "$root/build/llvm-$flavour/.chimera-built"; do
 			[ -e "$need" ] || { echo "link-core: $need is missing (build it first)" >&2; exit 1; }
 		done
 		;;
 esac
 case "$flavour" in
 	native)
-		out="$root/build/native"
+		out="$root/build/native$variant"
 		mkdir -p "$out"
 		[ -f "$root/build/native-libm/libchimera-m.a" ] || bash "$here/make-native-libm.sh" "$minibox"
 		gcc -O2 -g -c -o "$out/run-native.o" "$here/run-native.c" -I"$here"
@@ -73,7 +75,7 @@ case "$flavour" in
 		echo "link-core: $out/run-native"
 		;;
 	guest)
-		out="$root/build/guest"
+		out="$root/build/guest$variant"
 		mkdir -p "$out"
 		mb_cpp="$minibox/build/meson-cpp"
 		sr="$mb_cpp/guest-sysroot"

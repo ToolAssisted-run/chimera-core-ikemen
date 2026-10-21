@@ -37,9 +37,27 @@
 #   videos       a video's pictures and its sound come on the frames their
 #                times say, a looping video starts again when it ends, and
 #                the game's logo video is drawn
+#   older games  the screenpack game made into a game for Ikemen GO v0.99.0
+#                (tests/make-legacy-game.sh): the core recognizes v0.99's
+#                scripts and gives way to its own, replaces the old Boss Rush
+#                module and leaves out Rank, turns save/config.json into
+#                config.ini, and the game plays to a fight, native = sandbox;
+#                with one line of main.lua changed, it recognizes nothing
+#   media        the media check's test build (tests/media) pulls every music
+#                file and sound of the media test game (tests/make-media-game.sh:
+#                OGG, MP3, FLAC, WAV, an MP3 ending in junk, Musepack when
+#                mpcenc is installed, an SND file) and of the screenpack game
+#                through the engine's playback: the same in both builds, and
+#                as ffmpeg decodes them
 #   refusals     no game, and a file that is not a zip: each says why
+#   kof special  only with IKEMEN_KOF_ZIP naming a copy of KOF Special (a fan
+#                game made for v0.99.0, which may not be shared): its media
+#                all play, as ffmpeg decodes them, the same in both builds; it
+#                is recognized as an older game; Arcade to the second round,
+#                native = sandbox, and saved in the fight = straight.
+#                SKIP without it.
 #
-# usage: run-gate.sh -m <miniBox checkout>
+# usage: run-gate.sh -m <miniBox checkout>    [IKEMEN_KOF_ZIP=<zip>]
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/.." && pwd)"
@@ -71,7 +89,8 @@ step "the native Ikemen GO build" "$root/build/gate-native.log" bash "$here/buil
 step "the native link" "$root/build/gate-link-native.log" bash "$here/link-core.sh" native -m "$mb"
 step "the guest Ikemen GO build" "$root/build/gate-guest.log" bash "$here/build-ikemen.sh" guest -m "$mb"
 step "the guest link" "$root/build/gate-link-guest.log" bash "$here/link-core.sh" guest -m "$mb"
-step "the test games" "$root/build/gate-games.log" bash -c "bash '$root/tests/make-test-game.sh' && bash '$root/tests/make-probe.sh' && bash '$root/tests/make-video-probe.sh'"
+step "the media check's test builds" "$root/build/gate-media.log" bash -c "export CHIMERA_VARIANT=media; bash '$here/build-ikemen.sh' native -m '$mb' && bash '$here/link-core.sh' native -m '$mb' && bash '$here/build-ikemen.sh' guest -m '$mb' && bash '$here/link-core.sh' guest -m '$mb'"
+step "the test games" "$root/build/gate-games.log" bash -c "bash '$root/tests/make-test-game.sh' && bash '$root/tests/make-probe.sh' && bash '$root/tests/make-video-probe.sh' && bash '$root/tests/make-legacy-game.sh' && bash '$root/tests/make-legacy-game.sh' '$root/build/tests/legacy-broken.zip' broken && bash '$root/tests/make-media-game.sh'"
 native="$root/build/native/run-native"
 wbx="$root/build/guest/run-wbx"
 core="$root/build/guest/core.wbx"
@@ -83,6 +102,8 @@ passed=0
 fails=0
 pass() { echo "PASS $*"; passed=$((passed + 1)); }
 fail() { echo "FAIL $*"; fails=$((fails + 1)); }
+skip() { echo "SKIP $*"; skipped=$((skipped + 1)); }
+skipped=0
 
 # what a run says: the digests and the probe's lines (Ikemen GO's own start-up
 # lines are not the machine's). A session starts the game a second time in
@@ -93,7 +114,11 @@ digests() { grep -E '^([A-Za-z]+(\[[^]]*\])?=|probe )' "$1" | awk '!/^probe (sta
 same() { # same <test> <a> <b> <what>
 	digests "$2" > "$2.d"
 	digests "$3" > "$3.d"
-	if [ -s "$2.d" ] && cmp -s "$2.d" "$3.d"; then
+	# two runs that both stopped at the start are the same, and prove
+	# nothing: both must have run to their last frame (the clock line)
+	if grep -q '^loadError=' "$2.d" "$3.d" || ! grep -q '^clock=' "$2.d" || ! grep -q '^clock=' "$3.d"; then
+		fail "$1: $4 (a run stopped: $(grep -h -m1 '^loadError=' "$2.d" "$3.d" | head -1))"
+	elif [ -s "$2.d" ] && cmp -s "$2.d" "$3.d"; then
 		pass "$1: $4"
 	else
 		fail "$1: $4"; diff "$2.d" "$3.d" | head -20
@@ -225,6 +250,107 @@ for what in pictures sound loop logo; do
 	esac
 done
 
+# ---------------------------------------------------------------- older games
+echo "== older games (tests/make-legacy-game.sh: the screenpack game made for Ikemen GO v0.99.0)"
+mkwork legacy "$root/build/tests/legacy-game.zip"
+mkdir -p "$work/legacy-save" "$work/legacy-save-w"
+"$native" "$work/legacy" --frames $frames "${fight[@]}" --screenshot "$((frames - 1)):$work/legacy-last.tga" \
+	--savedata-out "$work/legacy-save" > "$work/ln.txt" 2> "$work/ln.err" &
+"$wbx" "$core" "$work/legacy" --frames $frames "${fight[@]}" --savedata-out "$work/legacy-save-w" > "$work/lw.txt" 2> "$work/lw.err"
+wait
+same "older games" "$work/ln.txt" "$work/lw.txt" "the game made for v0.99.0: native = sandbox, $frames frames, VS Mode to a fight, and the files it wrote"
+has "older games" "$work/ln.txt" "The game was made for an Ikemen GO older than v1.0: 23 of its copies of the engine's files are set aside for the core's own" "v0.99.0's 23 scripts and common files are recognized (with Windows line ends) and set aside for the core's"
+has "older games" "$work/ln.txt" "Its old modules replaced by their current versions: bossrush" "the 2023 Boss Rush module is replaced by its current version"
+has "older games" "$work/ln.txt" "Its old modules left out, as Ikemen GO no longer has them: rank" "the Rank module, which Ikemen GO no longer has, is left out"
+ini="$work/legacy-save/save/config.ini"
+if grep -qE '^Time += 45$' "$ini" && grep -qE '^Life += 80$' "$ini" && grep -qE '^Motif += data/ikemen1/system.def$' "$ini" &&
+   grep -qE '^GameWidth += 640$' "$ini" && grep -qE '^GameHeight += 480$' "$ini" &&
+   [ "$(python3 -c "import struct,sys; print('%dx%d' % struct.unpack_from('<HH', open(sys.argv[1],'rb').read(), 12))" "$work/legacy-last.tga" 2>/dev/null)" = 640x480 ]; then
+	pass "older games: save/config.json is the game's config.ini (round time 45, life 80%, its motif) over v0.99's defaults: the picture is v0.99's 640x480, not v1.0's 1280x720"
+else
+	fail "older games: config.ini: $(grep -E '^(Time|Life|Motif|GameWidth|GameHeight) ' "$ini" 2>/dev/null | tr -s ' ' | tr '\n' ';')"
+fi
+mkwork legacy-broken "$root/build/tests/legacy-broken.zip"
+"$native" "$work/legacy-broken" --frames 60 > "$work/lb.txt" 2> "$work/lb.err"
+if ! grep -q "made for an Ikemen GO older" "$work/lb.txt" && grep -q "^loadError=" "$work/lb.txt" && grep -q "^Error: external/script/main.lua:" "$work/lb.txt"; then
+	pass "older games: with one line added to main.lua it is no version the core knows, and it is left as it is (v0.99's script then stops the v1.0 engine: $(grep -m1 -o 'main.lua:[0-9]*: .*' "$work/lb.txt"))"
+else
+	fail "older games: the changed main.lua: $(grep -m1 "made for\|loadError" "$work/lb.txt")"
+fi
+
+# ---------------------------------------------------------------- media
+echo "== media (tests/media: every music file and sound through the engine's playback, against ffmpeg)"
+nmedia="$root/build/native-media/run-native"
+wmedia="$root/build/guest-media/run-wbx"
+cmedia="$root/build/guest-media/core.wbx"
+media_check() { # media_check <test dir> <zip> <what>
+	mkwork "$1" "$2"
+	"$nmedia" "$work/$1" --frames 1 > "$work/$1-n.txt" 2> "$work/$1-n.err" &
+	"$wmedia" "$cmedia" "$work/$1" --frames 1 > "$work/$1-w.txt" 2> "$work/$1-w.err"
+	wait
+	python3 "$root/tests/media/check-media.py" "$2" "$work/$1-n.txt" "$work/$1-w.txt" > "$work/$1-check.txt" 2>&1
+	local rc=$? summary
+	summary="$(tail -1 "$work/$1-check.txt")"
+	if [ "$rc" -eq 0 ] && grep -q "native = sandbox" "$work/$1-check.txt"; then
+		pass "media: $3: ${summary#media: }"
+	else
+		fail "media: $3: $summary"; grep '^problem' "$work/$1-check.txt" | head -10
+	fi
+	grep '^note' "$work/$1-check.txt" | sed 's/^/     /'
+}
+media_check media "$root/build/tests/media-game.zip" "the media test game"
+mline() { grep -P "^music\tsound/$1\t" "$work/media-n.txt" | cut -f3,5; }
+if [ "$(mline junk-end.mp3)" = "$(mline song.mp3)" ] && [ "$(mline song.mp3 | cut -f1)" = ok ]; then
+	pass "media: the MP3 ending in junk that looks like frame headers plays as the same MP3 without it ($(mline junk-end.mp3 | tr '\t' ' '))"
+else
+	fail "media: junk-end.mp3: $(mline junk-end.mp3) against song.mp3: $(mline song.mp3)"
+fi
+if [ -n "$(mline song.mpc)" ]; then
+	if [ "$(mline song.mpc | cut -f1)" = ok ]; then
+		pass "media: Musepack, which Ikemen GO has no decoder for, plays through the core's FFmpeg ($(mline song.mpc | tr '\t' ' '))"
+	else
+		fail "media: song.mpc: $(mline song.mpc)"
+	fi
+else
+	skip "media: Musepack: mpcenc is not installed, so the media test game has no Musepack file"
+fi
+media_check media-sp "$root/build/tests/test-game.zip" "the screenpack game"
+
+# ---------------------------------------------------------------- KOF Special
+echo "== kof special (IKEMEN_KOF_ZIP: a fan game made for v0.99.0, kept out of this repository)"
+if [ -n "${IKEMEN_KOF_ZIP:-}" ] && [ -f "$IKEMEN_KOF_ZIP" ]; then
+	media_check kof "$IKEMEN_KOF_ZIP" "KOF Special"
+	if grep -q "^note: 89 sounds under 128 bytes are left out" "$work/kof-check.txt" &&
+	   [ "$(grep -c '^note' "$work/kof-check.txt")" = 2 ]; then
+		pass "kof special: the media left out are only its 89 placeholder sounds of 110 bytes (Ikemen GO's rule, kept) and one empty file"
+	else
+		fail "kof special: notes: $(grep '^note' "$work/kof-check.txt" | tr '\n' ';')"
+	fi
+	# Arcade: past the intros (Start), the title's Arcade, Single Mode, the
+	# first character, then attacks through two rounds
+	python3 - "$work/kof.mov" <<'PY'
+import sys
+held = [set() for _ in range(6000)]
+def press(at, toks, n):
+    for f in range(at, min(6000, at + n)):
+        held[f].update(toks.split(","))
+for f in range(240, 1081, 60): press(f, "P1Start", 4)
+for f in (1150, 1250, 1350, 1450): press(f, "P1A", 4)
+for f in range(1500, 5901, 40):
+    press(f, *[("P1Right", 30), ("P1A", 4), ("P1B", 4), ("P1Down,P1C", 6), ("P1X", 4), ("P1Y", 4)][(f // 40) % 6])
+open(sys.argv[1], "w").write("".join(",".join(sorted(h)) + "\n" for h in held))
+PY
+	"$native" "$work/kof" --frames 6000 --movie "$work/kof.mov" --screenshot "5999:$work/kof-last.tga" > "$work/kn.txt" 2> "$work/kn.err" &
+	"$wbx" "$core" "$work/kof" --frames 6000 --movie "$work/kof.mov" > "$work/kw.txt" 2> "$work/kw.err"
+	wait
+	same "kof special" "$work/kn.txt" "$work/kw.txt" "Arcade from boot to the second round: native = sandbox, 6000 frames"
+	"$wbx" "$core" "$work/kof" --frames 6000 --movie "$work/kof.mov" --session-at 5000 > "$work/ks.txt" 2> "$work/ks.err"
+	same "kof special" "$work/ks.txt" "$work/kw.txt" "saved at frame 5000, in the second round, loaded into a new host = straight ($(sed -n 's/stateBytes=//p' "$work/ks.err" | head -1) state bytes)"
+	has "kof special" "$work/kn.txt" "Its old modules replaced by their current versions: bossrush, scorechallenge, timechallenge, vs100kumite" "recognized as made for v0.99.0; its four old modes replaced, Rank left out"
+else
+	skip "kof special: IKEMEN_KOF_ZIP does not name a copy of the game"
+fi
+
 echo "== save data (the probe writes save/probe.txt)"
 mkdir -p "$work/sdn" "$work/sdw" "$work/sds"
 "$native" "$work/probe" --frames 30 --savedata-out "$work/sdn" > "$work/sdn.txt" 2> /dev/null
@@ -283,5 +409,5 @@ else
 fi
 
 echo
-echo "$passed passed, $fails failed"
+echo "$passed passed, $fails failed, $skipped skipped"
 [ "$fails" -eq 0 ]

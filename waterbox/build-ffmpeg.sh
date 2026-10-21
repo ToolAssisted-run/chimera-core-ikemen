@@ -10,6 +10,8 @@
 # FFmpeg 7.1 under the LGPL, reading Matroska and WebM files, decoding VP8 and
 # VP9 through libvpx (only libvpx's decoders read a WebM video's transparency)
 # and Opus and Vorbis sound, with the scale, pad, crop and format filters.
+# Besides, for music in a format Ikemen GO has no decoder for (patch 0008,
+# chimera_music.go): Musepack (.mpc), versions 7 and 8.
 #
 # On top of that, every computer must decode a video to the same bytes, as a
 # movie depends on it:
@@ -45,10 +47,13 @@ cache="${CHIMERA_DEPS_DIR:-$root/build/deps}"
 out="$root/build/ffmpeg-$flavour"
 work="$root/build/ffmpeg-$flavour-work"
 
-if [ -f "$out/lib/libavcodec.a" ]; then
+# what is built; a build made otherwise is made again
+stamp="ffmpeg $ffmpeg_version libvpx $vpx_version; matroska, vp8, vp9, opus, vorbis; mpc, mpc8"
+if [ -f "$out/lib/libavcodec.a" ] && [ "$(cat "$out/.chimera-built" 2>/dev/null)" = "$stamp" ]; then
 	echo "ffmpeg: already built in $out"
 	exit 0
 fi
+rm -rf "${out:?}"
 
 fetch() { # <url> <file> <sha256>
 	if [ ! -f "$cache/$2" ]; then
@@ -111,18 +116,20 @@ export PKG_CONFIG_PATH="$out/lib/pkgconfig" PKG_CONFIG_LIBDIR="$out/lib/pkgconfi
 		--enable-avformat --enable-avcodec --enable-avutil --enable-swresample --enable-swscale \
 		--enable-avfilter --enable-filter=buffer,buffersink,format,scale,pad,crop \
 		--enable-libvpx \
-		--enable-demuxer=matroska \
-		--enable-decoder=libvpx_vp8,libvpx_vp9,opus,vorbis \
+		--enable-demuxer=matroska,mpc,mpc8 \
+		--enable-decoder=libvpx_vp8,libvpx_vp9,opus,vorbis,mpc7,mpc8 \
 		--enable-parser=vp8,vp9,opus,vorbis \
 		--disable-asm --disable-inline-asm --disable-x86asm --disable-runtime-cpudetect \
 		--disable-pthreads --disable-w32threads --disable-os2threads \
 		--disable-iconv --disable-zlib --disable-bzlib --disable-lzma \
 		> configure.log 2>&1 || { tail -30 configure.log >&2; exit 1; }
 	# FFmpeg only warns when a decoder it was asked for cannot be built
-	for d in LIBVPX_VP8_DECODER LIBVPX_VP9_DECODER OPUS_DECODER VORBIS_DECODER MATROSKA_DEMUXER; do
+	for d in LIBVPX_VP8_DECODER LIBVPX_VP9_DECODER OPUS_DECODER VORBIS_DECODER MATROSKA_DEMUXER \
+		MPC7_DECODER MPC8_DECODER MPC_DEMUXER MPC8_DEMUXER; do
 		grep -q "^#define CONFIG_$d 1" config_components.h || { echo "ffmpeg: configured without $d" >&2; exit 1; }
 	done
 	make -j"$jobs" > make.log 2>&1 || { tail -30 make.log >&2; exit 1; }
 	make install > install.log 2>&1
 )
+echo "$stamp" > "$out/.chimera-built"
 echo "ffmpeg: built $out ($(cd "$out/lib" && ls *.a | tr '\n' ' '))"

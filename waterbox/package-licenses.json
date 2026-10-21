@@ -1,8 +1,8 @@
 {
   "package": "ikemen",
-  "effectiveTerms": "MIT for Ikemen GO and for this core; BSD-3-Clause for the Go runtime; the Go modules inside under their own permissive licences (MIT, BSD, Apache-2.0, the FreeType License, the Unlicense), with their texts in go-modules.txt; MIT for libxmp and Mesa; Apache-2.0 with the LLVM exception for LLVM; LGPL-2.1-or-later for FFmpeg; BSD-3-Clause for libvpx",
+  "effectiveTerms": "MIT for Ikemen GO, its modules and this core; CC-BY-3.0 for Ikemen GO's common effects (data/gofx, by Shiyo Kakuge); BSD-3-Clause for the Go runtime; the Go modules inside under their own permissive licences (MIT, BSD, Apache-2.0, the FreeType License, the Unlicense), with their texts in go-modules.txt; MIT for libxmp and Mesa; Apache-2.0 with the LLVM exception for LLVM; LGPL-2.1-or-later for FFmpeg; BSD-3-Clause for libvpx",
   "commercialUse": "allowed",
-  "note": "The built core combines this repository's code (MIT): the glue in go/chimera, the stand-in for SDL 2's Go binding in go/sdl2, and the build scripts; Ikemen GO (MIT), compiled from the submodule extern/Ikemen-GO (v1.0.0) as a C archive with this repository's patches/ applied, with its engine files (data/, external/, font/) inside; the Go runtime and standard library (BSD-3-Clause, Go 1.27.3 with waterbox/go-patches applied); the Go modules Ikemen GO imports, each under the licence go-modules.txt gives (golang/freetype under the FreeType License: portions of this software are copyright The FreeType Project, www.freetype.org); libxmp (MIT); Mesa (MIT), whose llvmpipe driver behind OSMesa is the OpenGL Ikemen GO draws with (waterbox/mesa-patches applied); LLVM (Apache-2.0 with the LLVM exception), which llvmpipe compiles shaders with; and FFmpeg 7.1.5 (LGPL-2.1-or-later, built without its GPL parts) with libvpx 1.15.2 (BSD-3-Clause, with Google's patent grant in its PATENTS file), which play the games' background videos. FFmpeg is linked into the core statically: its source (the release tarball, unmodified) and this core's whole source and build scripts (waterbox/build-ffmpeg.sh, waterbox/link-core.sh) are published, so a user can build the core again with a changed FFmpeg, as the LGPL asks. The package carries no game: the project brings the game folder as a zip.",
+  "note": "The built core combines this repository's code (MIT): the glue in go/chimera, the stand-in for SDL 2's Go binding in go/sdl2, and the build scripts; Ikemen GO (MIT), compiled from the submodule extern/Ikemen-GO (v1.0.0) as a C archive with this repository's patches/ applied, with its engine files (data/, external/, font/) inside, and, from Ikemen GO's screenpack (extern/Ikemen-GO-Screenpack), the common effects its settings name, data/gofx: dizzy, guard break and tag switch effects by Shiyo Kakuge (CC-BY-3.0); four of Ikemen GO's modules (MIT, extern/Ikemen-GO-modules: Boss Rush, Score Challenge, Time Challenge, VS 100 Kumite), which take the place of their old versions in a game made for an older Ikemen GO; the Go runtime and standard library (BSD-3-Clause, Go 1.27.3 with waterbox/go-patches applied); the Go modules Ikemen GO imports, each under the licence go-modules.txt gives (go-mp3 with patches/go-mp3 applied) (golang/freetype under the FreeType License: portions of this software are copyright The FreeType Project, www.freetype.org); libxmp (MIT); Mesa (MIT), whose llvmpipe driver behind OSMesa is the OpenGL Ikemen GO draws with (waterbox/mesa-patches applied); LLVM (Apache-2.0 with the LLVM exception), which llvmpipe compiles shaders with; and FFmpeg 7.1.5 (LGPL-2.1-or-later, built without its GPL parts) with libvpx 1.15.2 (BSD-3-Clause, with Google's patent grant in its PATENTS file), which play the games' background videos, and music in a format Ikemen GO has no decoder for (Musepack). FFmpeg is linked into the core statically: its source (the release tarball, unmodified) and this core's whole source and build scripts (waterbox/build-ffmpeg.sh, waterbox/link-core.sh) are published, so a user can build the core again with a changed FFmpeg, as the LGPL asks. The package carries no game: the project brings the game folder as a zip.",
   "components": [
     {
       "name": "chimera-core-ikemen (the glue, the SDL 2 stand-in and the build)",
@@ -19,6 +19,22 @@
       "commit": "{submodule:extern/Ikemen-GO}",
       "file": "extern/Ikemen-GO/LICENCE.txt",
       "sourceUrl": "https://github.com/ikemen-engine/Ikemen-GO/archive/{commit}.tar.gz"
+    },
+    {
+      "name": "Ikemen GO's modules (Boss Rush, Score Challenge, Time Challenge, VS 100 Kumite)",
+      "license": "MIT",
+      "url": "https://github.com/ikemen-engine/modules",
+      "commit": "{submodule:extern/Ikemen-GO-modules}",
+      "file": "extern/Ikemen-GO-modules/License.txt",
+      "sourceUrl": "https://github.com/ikemen-engine/modules/archive/{commit}.tar.gz"
+    },
+    {
+      "name": "Ikemen GO's common effects (data/gofx: dizzy, guard break and tag switch effects by Shiyo Kakuge)",
+      "license": "CC-BY-3.0",
+      "url": "https://github.com/ikemen-engine/Ikemen-GO-Screenpack",
+      "commit": "{submodule:extern/Ikemen-GO-Screenpack}",
+      "file": "extern/Ikemen-GO-Screenpack/LICENCE.txt",
+      "sourceUrl": "https://github.com/ikemen-engine/Ikemen-GO-Screenpack/archive/{commit}.tar.gz"
     },
     {
       "name": "The Go runtime and standard library",

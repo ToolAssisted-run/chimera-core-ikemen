@@ -1,0 +1,40 @@
+go-mp3 v0.3.4 (Ikemen GO's MP3 decoder, through beep): a frame header it
+cannot decode - free bitrate, or a layer other than 3 - is looked past
+instead of failing the file. Such a header is more often junk after the last
+frame that looks like one: a game's music file that ends in a kilobyte of
+junk before its tag did not play at all, and plays to its end with this (as
+ffmpeg plays it).
+
+--- a/internal/frameheader/frameheader.go
++++ b/internal/frameheader/frameheader.go
+@@ -16,7 +16,6 @@
+ 
+ import (
+ 	"errors"
+-	"fmt"
+ 	"io"
+ 
+ 	"github.com/hajimehoshi/go-mp3/internal/consts"
+@@ -244,7 +243,11 @@
+ 	b3 := uint32(buf[2])
+ 	b4 := uint32(buf[3])
+ 	header := FrameHeader((b1 << 24) | (b2 << 16) | (b3 << 8) | (b4 << 0))
+-	for !header.IsValid() {
++	// A header this decoder cannot decode - free bitrate, or a layer other
++	// than 3 - is more often four bytes of something else that look like one
++	// (junk after the last frame): looked past, like any other bytes that
++	// are not a header.
++	for !header.IsValid() || header.BitrateIndex() == 0 || header.Layer() != consts.Layer3 {
+ 		b1 = b2
+ 		b2 = b3
+ 		b3 = b4
+@@ -264,9 +267,5 @@
+ 	// If we get here we've found the sync word, and can decode the header
+ 	// which is in the low 20 bits of the 32-bit sync+header word.
+ 
+-	if header.BitrateIndex() == 0 {
+-		return 0, 0, fmt.Errorf("mp3: free bitrate format is not supported. Header word is 0x%08x at position %d",
+-			header, position)
+-	}
+ 	return header, position, nil
+ }

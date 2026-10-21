@@ -8,8 +8,11 @@
 #   - patches/*.patch applied in order;
 #   - go/chimera/* (the glue, the disk, the desktop helpers) added to its
 #     package main, and the engine's own data/, external/ and font/ copied
-#     under src/chimera_engine for the disk to carry;
-#   - go/sdl2 put in place of SDL 2's Go binding (a replace directive).
+#     under src/chimera_engine for the disk to carry (with the screenpack's
+#     data/gofx, the effects v1.0's settings name), and four of Ikemen GO's
+#     modules (extern/Ikemen-GO-modules) under src/chimera_modules;
+#   - go/sdl2 put in place of SDL 2's Go binding (a replace directive), and
+#     go-mp3 (the MP3 decoder) with patches/go-mp3 applied in place of its own.
 # FFmpeg's binding (reisen) is Ikemen GO's own, over build-ffmpeg.sh's FFmpeg.
 # Built with the tags chimera (the core's files), kinc (Ikemen GO's tag that
 # leaves its Vulkan renderer out), netgo and osusergo (no C resolver).
@@ -42,8 +45,11 @@ ffmpeg="$root/build/ffmpeg-$flavour"
 mesa_inc="$root/build/mesa/include"
 [ -f "$mesa_inc/GL/osmesa.h" ] || { echo "ikemen: Mesa's headers are not unpacked (run setup-mesa.sh)" >&2; exit 1; }
 
-src="$root/build/ikemen-src"
-out="$root/build/$flavour"
+# CHIMERA_VARIANT=media builds the media check's test build (tests/media)
+# beside the core, in build/<flavour>-media
+variant="${CHIMERA_VARIANT:+-$CHIMERA_VARIANT}"
+src="$root/build/ikemen-src$variant"
+out="$root/build/$flavour$variant"
 mkdir -p "$out"
 
 # a fresh copy of the pinned source, patched, with the core's files
@@ -54,14 +60,41 @@ for p in "$root"/patches/*.patch; do
 	patch -d "$src" -p1 --quiet < "$p" || { echo "ikemen: $(basename "$p") does not apply" >&2; exit 1; }
 done
 cp "$root"/go/chimera/* "$src/src/"
+if [ "$variant" = -media ]; then
+	cp "$root"/tests/media/*.go "$src/src/"
+fi
 mkdir -p "$src/src/chimera_engine"
 cp -r "$src/data" "$src/external" "$src/font" "$src/src/chimera_engine/"
+# and the common effects v1.0's default settings name (data/gofx), which
+# Ikemen GO's releases take from the screenpack
+cp -r "$root/extern/Ikemen-GO-Screenpack/data/gofx" "$src/src/chimera_engine/data/"
+# the current versions of the modules a game made for an older Ikemen GO may
+# carry old ones of (chimera_legacy.go)
+mods="$root/extern/Ikemen-GO-modules/external/mods"
+mkdir -p "$src/src/chimera_modules"
+for m in bossrush scorechallenge timechallenge vs100kumite; do
+	[ -f "$mods/$m/$m.lua" ] || { echo "ikemen: the modules submodule has no $m" >&2; exit 1; }
+	cp -r "$mods/$m" "$src/src/chimera_modules/"
+done
 
 export GOROOT="$goroot" PATH="$goroot/bin:$PATH" GOTOOLCHAIN=local GOFLAGS=-mod=mod
 export GOPATH="${CHIMERA_GOPATH:-$root/build/gopath}" GOCACHE="$root/build/gocache-$flavour"
 (
 	cd "$src"
 	go mod edit -replace "github.com/veandco/go-sdl2=$root/go/sdl2"
+	# the Go modules this core patches (patches/<module>/): a copy of the
+	# version Ikemen GO pins, patched, in its place
+	for dir in "$root"/patches/go-mp3; do
+		mod="github.com/hajimehoshi/$(basename "$dir")"
+		from="$(go mod download -json "$mod" | sed -n 's/^\t"Dir": "\(.*\)",$/\1/p')"
+		[ -d "$from" ] || { echo "ikemen: $mod could not be fetched" >&2; exit 1; }
+		cp -r "$from" "$src/chimera-$(basename "$dir")"
+		chmod -R u+w "$src/chimera-$(basename "$dir")"
+		for p in "$dir"/*.patch; do
+			patch -d "$src/chimera-$(basename "$dir")" -p1 --quiet < "$p" || { echo "ikemen: $p does not apply" >&2; exit 1; }
+		done
+		go mod edit -replace "$mod=./chimera-$(basename "$dir")"
+	done
 )
 
 kit="-I$minibox/source/guest/include -I$minibox/extern/jsmn -I$mesa_inc -I$xmp/include"

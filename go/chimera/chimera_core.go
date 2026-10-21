@@ -114,6 +114,7 @@ func chimeraMain() {
 	if err := fsSeedSaveData(saves); err != nil {
 		chimeraFail("the project's save data could not be used: " + err.Error())
 	}
+	legacyConfig()
 
 	// the players' controllers are connected from the start
 	for i := 0; i < C.CHIMERA_PLAYERS; i++ {
@@ -235,6 +236,9 @@ func sendControls() {
 	}
 }
 
+// the media check of tests/media, which only its test build sets
+var chimeraMediaCheck func(cfg *Config)
+
 // chimeraConfig is what the core sets in the game's configuration after it
 // is read (patch 0002): the players' controls, and what a machine has to be.
 func chimeraConfig(cfg *Config) {
@@ -273,6 +277,9 @@ func chimeraConfig(cfg *Config) {
 			}
 		}
 		cfg.Joystick[key] = chimeraPadConfig(p)
+	}
+	if chimeraMediaCheck != nil {
+		chimeraMediaCheck(cfg)
 	}
 }
 
