@@ -9,7 +9,11 @@ fighting game engine. The owner first deferred it: Ikemen GO is written in
 Go, and the sandbox runs programs built against its own C library, which a Go
 program does not use. After a deeper analysis and a trial (below) the owner
 asked for the core to be built, in a repository of its own and local, with
-nothing published.
+nothing published. Once a game of the owner's (KOF Special) played in every
+mode and all its music and sounds were checked, the owner asked for it to be
+published (2026-10-21): the first published build is "Development build
+ccaaa382 (made 2026-10-21 15:38 CEST)", the core is in Chimera's list of
+official cores (chimera a4e86f4) and on the website's Tools page.
 
 ## The answers before any code (Chimera's docs/new-core.md, section 1)
 
