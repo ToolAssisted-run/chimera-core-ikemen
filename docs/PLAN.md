@@ -176,7 +176,7 @@ the need:
 
 ## The game's properties (2026-10-20)
 
-A game core names its state (Chimera's docs/game-cores.md). Ikemen GO's is on
+A core may name its game's state (Chimera's docs/game-cores.md). Ikemen GO's is on
 Go's heap, so the core keeps a block of its own, the "Game State" domain
 (chimera_props.c, chimera_props.go): 32 bytes for the match (the frame, the
 random seed, the round, the round's time left, the match time, each side's
@@ -459,3 +459,15 @@ Measured (2026-10-21):
   and 4000 (in the first round) is the Linux native build's picture to the
   pixel. The sound was not compared there.
 - The package is 38.6 MB (38.1 MB before).
+
+
+## An emulator core, as OpenBOR is (user-decided, 2026-10-21)
+
+The package first said `"kind": "game"`, which puts a core with Chimera's
+game cores: the Core Manager's Game type, the new-project wizard's Game
+kind, and a Game menu where an emulator core has its Emulator menu. The
+owner corrected it: like OpenBOR, Ikemen GO is an engine that plays many
+games made for it (and M.U.G.E.N characters and stages), so it is an
+emulator core. `waterbox.config` no longer carries a kind (absent means
+emulator); Chimera's README and roster moved it in chimera 14dcc67. The
+game's properties stay: any core may name its state.
