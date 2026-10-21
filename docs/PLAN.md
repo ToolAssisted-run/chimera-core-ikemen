@@ -395,10 +395,14 @@ before we publish the core".
     stage that names it is not in the game's select list.
   - `data/XIend.mpc` is Musepack, which none of Ikemen GO's decoders reads.
     Patch 0008 gathers Bgm.Open's choice of decoder in one function and
-    gives a file none of them reads to the core's FFmpeg (chimera_music.go:
-    decoded whole as it opens, kept as 16-bit samples the player loops and
-    seeks); build-ffmpeg.sh adds FFmpeg's Musepack reader and decoders. No
-    file of the game names XIend.def.
+    gives a file none of them reads to the core's FFmpeg (chimera_music.c
+    and .go: decoded whole as it opens, kept as 16-bit samples the player
+    loops and seeks); build-ffmpeg.sh adds FFmpeg's Musepack reader and
+    decoders. No file of the game names XIend.def. The decoding is the
+    core's own C, not reisen's: reisen sends a packet and takes one frame,
+    and a Musepack 8 packet holds several, so the next packet was refused
+    ("couldn't send the packet to the codec context", seen first in CI,
+    whose mpcenc makes Musepack 8; the game's file is Musepack 7).
   - 89 sounds in the characters' SND files are one 110-byte placeholder: a
     valid WAV of a 3 ms click, which MUGEN plays and Ikemen GO (v0.99 and
     v1.0 alike) leaves out, as it leaves out every sound under 128 bytes.
@@ -413,10 +417,9 @@ before we publish the core".
 
 Measured (2026-10-21):
 
-- waterbox/run-gate.sh, with IKEMEN_KOF_ZIP naming a copy of KOF Special:
-  52 passed, 0 failed, 1 skipped, in 27 minutes. Skipped: the Musepack test
-  of the media test game (no mpcenc on this computer; KOF Special's own
-  Musepack file was checked). New: older games (6 tests), media (4), kof
+- waterbox/run-gate.sh, with IKEMEN_KOF_ZIP naming a copy of KOF Special
+  and mpcenc on the path (from Ubuntu's musepack-tools, unpacked, not
+  installed): 53 passed, 0 failed, 0 skipped, in 26 minutes. New: older games (6 tests), media (4), kof
   special (4, and its media). The comparison of two runs now also asks
   that both ran to their last frame: two runs that both stopped at the
   start compare the same and prove nothing.

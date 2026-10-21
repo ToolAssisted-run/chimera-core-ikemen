@@ -21,8 +21,8 @@ this repository's `docs/PLAN.md` first.
   `chimera_core.go` (the Go half: start, sound, controls, configuration),
   `chimera_fs.go` (the game's disk), `chimera_util.go` (the desktop helpers),
   `chimera_video.go` (background videos, decoded on the frame),
-  `chimera_music.go` (music in a format Ikemen GO cannot read, through
-  FFmpeg), `chimera_legacy.go` (games made for an older Ikemen GO; its lists
+  `chimera_music.c`/`.go` (music in a format Ikemen GO cannot read,
+  decoded whole by FFmpeg), `chimera_legacy.go` (games made for an older Ikemen GO; its lists
   `chimera_legacy_files.txt` and `chimera_legacy_config.json` are written by
   `waterbox/make-legacy-list.py`), `chimera_props.go` (the game's
   properties).

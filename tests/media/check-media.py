@@ -28,6 +28,7 @@ import os
 import struct
 import subprocess
 import sys
+import tempfile
 import zipfile
 
 zpath, outs = sys.argv[1], sys.argv[2:]
@@ -84,16 +85,25 @@ def snd_entries(data):
     return out
 
 
+def ffmpeg(args, data):
+    """ffmpeg (or ffprobe) on the file's bytes, from a file of its own: some
+    formats (Musepack 8) cannot be read from a pipe, which cannot seek."""
+    with tempfile.NamedTemporaryFile(suffix=".media") as f:
+        f.write(data)
+        f.flush()
+        return subprocess.run([a if a != "pipe:0" else f.name for a in args], capture_output=True)
+
+
 def envelope(data):
     """ffmpeg's decoding at 44100 Hz, the RMS of every 735 frames over the
     file's own channels (the engine plays mono at full level on both sides,
     which has the same RMS; ffmpeg's own turning of mono into stereo would
     lower it 3 dB)."""
-    r = subprocess.run(["ffmpeg", "-v", "error", "-i", "pipe:0", "-af",
-                        "aresample=44100,aformat=sample_fmts=s16,"
-                        "asetnsamples=n=735:p=0,astats=metadata=1:reset=1,"
-                        "ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
-                        "-f", "null", "-"], input=data, capture_output=True)
+    r = ffmpeg(["ffmpeg", "-v", "error", "-i", "pipe:0", "-af",
+                "aresample=44100,aformat=sample_fmts=s16,"
+                "asetnsamples=n=735:p=0,astats=metadata=1:reset=1,"
+                "ametadata=print:key=lavfi.astats.Overall.RMS_level:file=-",
+                "-f", "null", "-"], data)
     env = []
     for line in r.stdout.decode().splitlines():
         if line.startswith("lavfi.astats.Overall.RMS_level="):
@@ -108,14 +118,13 @@ def as_engine(data, quality):
     each position), and its envelope; None at other qualities."""
     if quality != 1:
         return None
-    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=sample_rate,channels", "-of",
-                            "default=nw=1", "pipe:0"], input=data, capture_output=True).stdout.decode()
+    probe = ffmpeg(["ffprobe", "-v", "error", "-show_entries", "stream=sample_rate,channels", "-of",
+                    "default=nw=1", "pipe:0"], data).stdout.decode()
     info = dict(l.split("=", 1) for l in probe.splitlines() if "=" in l)
     rate, ch = int(info.get("sample_rate", 0)), int(info.get("channels", 0))
     if not rate or not ch:
         return None
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", "pipe:0", "-f", "s16le", "-"], input=data,
-                         capture_output=True).stdout
+    raw = ffmpeg(["ffmpeg", "-v", "error", "-i", "pipe:0", "-f", "s16le", "-"], data).stdout
     n = len(raw) // (2 * ch)
     pcm = struct.unpack("<%dh" % (n * ch), raw[:n * ch * 2])
     ratio = rate / 44100

@@ -2,19 +2,24 @@
 
 // Music in a format none of Ikemen GO's decoders reads (patch 0008), decoded
 // by the core's FFmpeg, which reads Musepack besides the videos' formats
-// (build-ffmpeg.sh). The whole file is decoded as it is opened and kept as
-// 16-bit samples, which the music player loops and seeks like any other
-// music.
+// (build-ffmpeg.sh). The whole file is decoded as it is opened
+// (chimera_music.c) and kept as 16-bit samples, which the music player loops
+// and seeks like any other music.
 package main
 
+/*
+#cgo pkg-config: libavformat libavcodec libswresample libavutil
+#include "chimera_music.h"
+#include <stdlib.h>
+*/
+import "C"
+
 import (
-	"encoding/binary"
 	"errors"
 	"io"
-	"math"
+	"unsafe"
 
 	"github.com/gopxl/beep/v2"
-	"github.com/ikemen-engine/reisen"
 )
 
 type chimeraPCM struct {
@@ -48,65 +53,33 @@ func (p *chimeraPCM) Seek(pos int) error {
 	return nil
 }
 
-func pcm16(v float64) int16 {
-	return int16(math.Round(math.Max(-1, math.Min(1, v)) * 32767))
-}
-
 func chimeraMusic(f io.ReadSeekCloser) (beep.StreamSeekCloser, beep.Format, error) {
-	defer f.Close()
-	m, err := reisen.NewMediaFromReader(f)
+	data, err := io.ReadAll(f)
+	f.Close()
 	if err != nil {
 		return nil, beep.Format{}, err
 	}
-	defer m.Close()
-	streams := m.AudioStreams()
-	if len(streams) == 0 {
-		return nil, beep.Format{}, errors.New("FFmpeg finds no sound in it")
+	if len(data) == 0 {
+		return nil, beep.Format{}, errors.New("the file is empty")
 	}
-	a := streams[0]
-	if err := m.OpenDecode(); err != nil {
-		return nil, beep.Format{}, err
+	cdata := C.CBytes(data)
+	defer C.free(cdata)
+	var m C.struct_chimera_music
+	if C.chimera_music_decode(cdata, C.long(len(data)), &m) != 0 {
+		return nil, beep.Format{}, errors.New(C.GoString(&m.error[0]))
 	}
-	defer m.CloseDecode()
-	if err := a.Open(); err != nil {
-		return nil, beep.Format{}, err
-	}
-	defer a.Close()
-	var pcm [][2]int16
-	for again := 0; again < 1000; {
-		packet, got, err := m.ReadPacket()
-		if err != nil {
-			return nil, beep.Format{}, err
-		}
-		if !got {
-			break
-		}
-		if packet == nil { // the reader asked to be called again
-			again++
-			continue
-		}
-		again = 0
-		if packet.StreamIndex() != a.Index() {
-			continue
-		}
-		af, ok, err := a.ReadAudioFrame()
-		if err != nil {
-			return nil, beep.Format{}, err
-		}
-		if !ok || af == nil {
-			continue
-		}
-		// two channels of 64-bit floats (reisen's output)
-		raw := af.Data()
-		for i := 0; i+16 <= len(raw); i += 16 {
-			pcm = append(pcm, [2]int16{
-				pcm16(math.Float64frombits(binary.LittleEndian.Uint64(raw[i:]))),
-				pcm16(math.Float64frombits(binary.LittleEndian.Uint64(raw[i+8:]))),
-			})
+	defer C.chimera_music_free(&m)
+	frames, channels := int(m.frames), int(m.channels)
+	raw := unsafe.Slice((*int16)(unsafe.Pointer(m.samples)), frames*channels)
+	pcm := make([][2]int16, frames)
+	for i := range pcm {
+		if channels == 1 {
+			// a mono file at full level on both sides, as Ikemen GO's own
+			// decoders play it
+			pcm[i] = [2]int16{raw[i], raw[i]}
+		} else {
+			pcm[i] = [2]int16{raw[2*i], raw[2*i+1]}
 		}
 	}
-	if len(pcm) == 0 {
-		return nil, beep.Format{}, errors.New("FFmpeg decodes no sound from it")
-	}
-	return &chimeraPCM{samples: pcm}, beep.Format{SampleRate: beep.SampleRate(a.SampleRate()), NumChannels: 2, Precision: 2}, nil
+	return &chimeraPCM{samples: pcm}, beep.Format{SampleRate: beep.SampleRate(m.rate), NumChannels: 2, Precision: 2}, nil
 }
