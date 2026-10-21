@@ -37,8 +37,8 @@ Built and tested on this machine; not published. Chimera issue 324.
   with Kung Fu Man) from boot, with its logo video, through VS Mode to a
   fight; this repository's two probes (one plays a video with sound); and
   KOF Special, a fan game made for Ikemen GO 0.99 (not shared here): Arcade,
-  Boss Rush and Watch Mode fights, and all its 329 music files and 13,447
-  sounds. The sandboxed core and a plain native build agree on every
+  VS Mode, Training, Survival, Boss Rush and Watch Mode, and all its 329
+  music files and 13,447 sounds. The sandboxed core and a plain native build agree on every
   picture, the sound and every step; savestates land where the straight run
   does; Chimera on Linux and on Windows draws the same pictures.
 - The game's state is named for Chimera's tools (RAM Watch, freezes, Lua's

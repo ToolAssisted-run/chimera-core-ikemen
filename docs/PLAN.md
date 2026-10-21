@@ -434,8 +434,12 @@ Measured (2026-10-21):
   Watch Mode for 30000 frames (a whole match between two computer players,
   then the select screen), native = sandbox, the sandbox's process at most
   2.6 GB (natively 0.56 GB); Boss Rush (the replaced module) to its first
-  fight, against its boss, natively. The game runs at about 29 frames a
-  second at 640x480 in the sandbox.
+  fight, against its boss, natively. Then VS Mode (each player picks with
+  their own controller, both attack, into the second round, 6000 frames),
+  Training (the infinite timer and full gauges, 3000 frames) and Survival
+  (a loss, Game Over, and a new run as a team of two, 6000 frames): each
+  native = sandbox. The game runs at about 29 frames a second at 640x480
+  in the sandbox.
 - The media check of KOF Special: 329 music files (about 6.3 hours) and
   13,447 sounds in 3.4 minutes natively and 3.3 in the sandbox; every one the
   same in both, bit for bit, and as ffmpeg decodes it (18 of the sounds once
