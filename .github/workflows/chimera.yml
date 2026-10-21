@@ -10,6 +10,10 @@ name: chimera waterbox core
 #     (pictures, sound, steps, the probe's printed lines), with savestates;
 #   - the clock, random numbers, controls, save data and the refusals (the
 #     probe);
+#   - a game made for Ikemen GO v0.99.0 (tests/make-legacy-game.sh, which
+#     fetches two older commits of the submodules), and the media check
+#     against ffmpeg (ffmpeg and mpcenc come from apt). The test of KOF
+#     Special, a fan game that cannot be shared, is skipped here;
 #   - the package in Chimera's headless runner and in its window, with the
 #     game's properties;
 #   - Chimera's own checks of the package.
