@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Links the core from what build-ikemen.sh, build-libxmp.sh and setup-mesa.sh
-# built:
+# Links the core from what build-ikemen.sh, build-libxmp.sh, build-ffmpeg.sh
+# and setup-mesa.sh built:
 #
 #   native  build/native/run-native: the native reference, the core's calls
 #           driven by run-native.c, with the sandbox's math (make-native-libm.sh);
@@ -26,10 +26,12 @@ minibox="$(cd "$minibox" && pwd)"
 
 ikemen_libs() {
 	# Ikemen GO and the glue (build-ikemen.sh), whole: the core's calls are in
-	# it and nothing else asks for them; then libxmp
+	# it and nothing else asks for them; then libxmp and FFmpeg
 	local lib="$root/build/$1/libikemen.a"
+	local ff="$root/build/ffmpeg-$1/lib"
 	[ -f "$lib" ] || { echo "link-core: no $lib (run build-ikemen.sh $1)" >&2; exit 1; }
 	echo "-Wl,--whole-archive $lib -Wl,--no-whole-archive $root/build/libxmp-$1/lib/libxmp.a"
+	echo "$ff/libavfilter.a $ff/libavformat.a $ff/libavcodec.a $ff/libswresample.a $ff/libswscale.a $ff/libavutil.a $ff/libvpx.a"
 }
 llvm_libs() {
 	# llvmpipe's LLVM (build-llvm.sh), every library; only what Mesa calls is linked
@@ -49,7 +51,7 @@ mesa_parts() {
 case "$flavour" in
 	native | guest)
 		# checked here: an exit inside $(...) below would only leave the subshell
-		for need in "$root/build/$flavour/libikemen.a" "$root/build/libxmp-$flavour/lib/libxmp.a" "$root/build/llvm-$flavour/.chimera-built"; do
+		for need in "$root/build/$flavour/libikemen.a" "$root/build/libxmp-$flavour/lib/libxmp.a" "$root/build/ffmpeg-$flavour/lib/libavcodec.a" "$root/build/llvm-$flavour/.chimera-built"; do
 			[ -e "$need" ] || { echo "link-core: $need is missing (build it first)" >&2; exit 1; }
 		done
 		;;

@@ -9,12 +9,12 @@
 #   - go/chimera/* (the glue, the disk, the desktop helpers) added to its
 #     package main, and the engine's own data/, external/ and font/ copied
 #     under src/chimera_engine for the disk to carry;
-#   - go/sdl2 and go/reisen put in place of SDL 2's and FFmpeg's Go bindings
-#     (replace directives).
+#   - go/sdl2 put in place of SDL 2's Go binding (a replace directive).
+# FFmpeg's binding (reisen) is Ikemen GO's own, over build-ffmpeg.sh's FFmpeg.
 # Built with the tags chimera (the core's files), kinc (Ikemen GO's tag that
 # leaves its Vulkan renderer out), netgo and osusergo (no C resolver).
 #
-# Needs: setup-go.sh, build-libxmp.sh <flavour>, and Mesa's headers
+# Needs: setup-go.sh, build-libxmp.sh <flavour>, build-ffmpeg.sh <flavour>, and Mesa's headers
 # (setup-mesa.sh has unpacked build/mesa).
 set -euo pipefail
 
@@ -37,6 +37,8 @@ goroot="$root/build/go-$flavour"
 [ -x "$goroot/bin/go" ] || { echo "ikemen: run setup-go.sh first" >&2; exit 1; }
 xmp="$root/build/libxmp-$flavour"
 [ -f "$xmp/lib/libxmp.a" ] || { echo "ikemen: run build-libxmp.sh $flavour first" >&2; exit 1; }
+ffmpeg="$root/build/ffmpeg-$flavour"
+[ -f "$ffmpeg/lib/libavcodec.a" ] || { echo "ikemen: run build-ffmpeg.sh $flavour first" >&2; exit 1; }
 mesa_inc="$root/build/mesa/include"
 [ -f "$mesa_inc/GL/osmesa.h" ] || { echo "ikemen: Mesa's headers are not unpacked (run setup-mesa.sh)" >&2; exit 1; }
 
@@ -60,12 +62,12 @@ export GOPATH="${CHIMERA_GOPATH:-$root/build/gopath}" GOCACHE="$root/build/gocac
 (
 	cd "$src"
 	go mod edit -replace "github.com/veandco/go-sdl2=$root/go/sdl2"
-	go mod edit -replace "github.com/ikemen-engine/reisen=$root/go/reisen"
 )
 
 kit="-I$minibox/source/guest/include -I$minibox/extern/jsmn -I$mesa_inc -I$xmp/include"
-# go-gl asks pkg-config for OpenGL: the answer is the core's own (pkgconfig/gl.pc)
-export PKG_CONFIG_PATH="$here/pkgconfig" PKG_CONFIG_LIBDIR="$here/pkgconfig"
+# go-gl asks pkg-config for OpenGL: the answer is the core's own (pkgconfig/gl.pc);
+# reisen asks it for FFmpeg's libraries: build-ffmpeg.sh's
+export PKG_CONFIG_PATH="$here/pkgconfig:$ffmpeg/lib/pkgconfig" PKG_CONFIG_LIBDIR="$here/pkgconfig:$ffmpeg/lib/pkgconfig"
 if [ "$flavour" = native ]; then
 	export CC=gcc
 	export CGO_CFLAGS="-O2 -fcf-protection=none -I$here/native-shim $kit"

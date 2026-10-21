@@ -1,0 +1,21 @@
+; The video probe's storyboard: two videos at once, as a background - this
+; repository's beeps.webm (VP9 pictures and Opus sound, 3 seconds: a white
+; picture and a beep at 1 and at 2 seconds) and, over it, the screenpack's
+; logo video (VP9 with transparency, 4 seconds) looping.
+; The scene lasts longer than any test runs: a storyboard's end needs the
+; menus' screen fades, which the probe does not load.
+[Info]
+localcoord = 1280,720
+
+[Scene 0]
+bg.name = BG0
+end.time = 100000
+
+[BG0 Beeps]
+type = video
+path = beeps.webm
+
+[BG0 Logo]
+type = video
+path = ik_logo.webm
+loop = 1

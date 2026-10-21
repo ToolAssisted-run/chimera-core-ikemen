@@ -25,8 +25,8 @@ SOFTWARE.
 What this license covers, and what the built core contains
 
 The license above covers this repository's own code: the glue in go/chimera,
-the stand-in packages in go/sdl2 and go/reisen, the patches, the scripts in
-waterbox/ and tools/, and the documents.
+the stand-in package in go/sdl2, the patches, the scripts in waterbox/ and
+tools/, the tests (tests/video/beeps.webm included), and the documents.
 
 The core package built from it (ikemen.chimeraCore) also contains, each under
 its own terms (the package's licenses/ folder holds every text):
@@ -43,6 +43,12 @@ its own terms (the package's licenses/ folder holds every text):
   game draws with, with waterbox/mesa-patches applied;
 - LLVM 18.1.8 (Apache-2.0 with the LLVM exception), which llvmpipe compiles
   shaders with;
+- FFmpeg 7.1.5 (LGPL-2.1-or-later, built without its GPL parts) and libvpx
+  1.15.2 (BSD-3-Clause, with Google's patent grant), which play background
+  videos. FFmpeg is linked in statically; its source is the unmodified
+  release, and this repository's source and scripts
+  (waterbox/build-ffmpeg.sh, waterbox/link-core.sh) build the core again with
+  a changed FFmpeg, as the LGPL asks;
 - musl and the miniBox guest kit (MIT).
 
 The package carries no game and no screenpack: the project brings the game

@@ -1,0 +1,84 @@
+diff --git a/src/chimera_off.go b/src/chimera_off.go
+index 8c08f6a..78e0c8c 100644
+--- a/src/chimera_off.go
++++ b/src/chimera_off.go
+@@ -7,3 +7,5 @@ package main
+ const chimeraCore = false
+ 
+ func chimeraConfig(cfg *Config) {}
++
++func (bgv *bgVideo) chimeraDecode() {}
+diff --git a/src/video_ffmpeg.go b/src/video_ffmpeg.go
+index ca9232e..373b760 100644
+--- a/src/video_ffmpeg.go
++++ b/src/video_ffmpeg.go
+@@ -43,6 +43,12 @@ type bgVideo struct {
+ 	videoVol        *effects.Volume
+ 	audioSampleRate beep.SampleRate
+ 	inMixer         bool
++	// the Chimera core decodes on the frame (chimera_video.go)
++	chimeraNext     *image.RGBA   // a frame decoded and not yet due
++	chimeraNextAt   time.Duration // when it is due, after startWall
++	chimeraHaveNext bool          // chimeraNext is nil for a hidden video
++	chimeraEndAt    time.Duration // when the last picture is over; 0 before the end
++	chimeraFinish   func()        // what the decoding goroutine did at the end
+ }
+ 
+ const (
+@@ -271,6 +277,25 @@ func (bgv *bgVideo) Open(filename string, volume int, sm BgVideoScaleMode, sf Bg
+ 
+ 	// Decode loop. When EOF is reached and loop==true, rewind to t=0 and continue.
+ 	opened = true
++	if chimeraCore {
++		// The Chimera core decodes each frame's picture and sound on the
++		// frame, in Tick, with no goroutine: what a goroutine beside the
++		// frames got done by a given frame would depend on the computer.
++		bgv.chimeraHaveNext = false
++		bgv.chimeraNext = nil
++		bgv.chimeraEndAt = 0
++		bgv.chimeraFinish = func() {
++			bgv.chimeraFinish = nil
++			bgv.chimeraHaveNext = false
++			bgv.chimeraNext = nil
++			cleanup()
++			close(bgv.frameBuffer)
++			close(bgv.audioBuffer)
++			close(bgv.errs)
++			close(bgv.done)
++		}
++		return nil
++	}
+ 	SafeGo(func() {
+ 		defer close(bgv.done)
+ 		for {
+@@ -459,6 +484,9 @@ func (bgv *bgVideo) processPacket() bool {
+ }
+ 
+ func (bgv *bgVideo) Tick() error {
++	if chimeraCore {
++		bgv.chimeraDecode()
++	}
+ 	select {
+ 	case err, ok := <-bgv.errs:
+ 		if ok {
+@@ -596,6 +624,9 @@ func (bgv *bgVideo) Reset() {
+ 	bgv.lastFrame = nil
+ 	bgv.haveBasePTS = false
+ 	bgv.elapsedPTS = 0
++	bgv.chimeraHaveNext = false
++	bgv.chimeraNext = nil
++	bgv.chimeraEndAt = 0
+ }
+ 
+ // buildFFFilterGraph builds a scale(+optional crop/pad)+format filtergraph string for FFmpeg.
+@@ -761,6 +792,10 @@ func (bgv *bgVideo) Close() {
+ 		return
+ 	default:
+ 	}
++	if chimeraCore && bgv.chimeraFinish != nil {
++		bgv.chimeraFinish()
++		return
++	}
+ 	// Signal goroutine to exit; cleanup happens there.
+ 	if bgv.quit != nil {
+ 		close(bgv.quit)

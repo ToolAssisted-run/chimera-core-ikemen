@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Writes build/licenses/go-modules.txt: the licence text of every Go module
 # compiled into the core (go list -deps of Ikemen GO with the core's tags),
-# each under its name and version. The modules this repository puts in place
-# of others (go/sdl2, go/reisen) are its own and not listed. Run after
+# each under its name and version. The module this repository puts in place
+# of SDL 2's binding (go/sdl2) is its own and not listed. Run after
 # build-ikemen.sh guest, from which it takes the source and the toolchain.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -22,7 +22,7 @@ cd "$src"
 	go list -deps -tags chimera,kinc,netgo,osusergo -f '{{if .Module}}{{.Module.Path}} {{.Module.Version}}{{end}}' ./src | sort -u |
 	while read -r path version; do
 		case "$path" in
-			github.com/ikemen-engine/Ikemen-GO | github.com/veandco/go-sdl2 | github.com/ikemen-engine/reisen) continue ;;
+			github.com/ikemen-engine/Ikemen-GO | github.com/veandco/go-sdl2) continue ;;
 		esac
 		dir="$(go list -m -f '{{.Dir}}' "$path")"
 		files="$(find "$dir" -maxdepth 1 -type f \( -iname 'LICEN[CS]E*' -o -iname 'COPYING*' -o -iname 'UNLICENSE*' \) | sort)"

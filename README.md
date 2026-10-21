@@ -18,19 +18,22 @@ Built and tested on this machine; not published. Chimera issue 324.
 - Ikemen GO games drawn with its OpenGL 3.3 renderer on a software OpenGL
   inside the core (Mesa's llvmpipe, made to generate the same code on every
   computer).
+- Background videos play through FFmpeg, built with what Ikemen GO's own
+  releases read (WebM with VP8 or VP9 pictures, transparency, Opus or Vorbis
+  sound) and decoded on each frame, so that every computer shows the same
+  pictures and plays the same sound. Tried: VP9 with and without
+  transparency, and Opus; VP8 and Vorbis not yet.
 - Tried: the Ikemen GO screenpack (the default motif its releases carry,
-  with Kung Fu Man) from boot through VS Mode to a fight, and this
-  repository's probe. The sandboxed core and a plain native build agree on
+  with Kung Fu Man) from boot, with its logo video, through VS Mode to a
+  fight, and this repository's two probes (one plays a video with sound). The sandboxed core and a plain native build agree on
   every picture, the sound and every step; savestates land where the
   straight run does; Chimera on Linux and on Windows draws the same
   pictures. No other game has been tried yet.
 - The game's state is named for Chimera's tools (RAM Watch, freezes, Lua's
   `game.*`): the round, its time, the random seed, and each fighter's life,
   power, position, state and gauges, most of them writable.
-- Not there: background videos (the core has no FFmpeg; a video is skipped,
-  as Ikemen GO skips one it cannot read), netplay, the Vulkan renderer, the
-  GPU. A 1280x720 game runs at about 7 to 10 frames a second on a fast
-  computer.
+- Not there: netplay, the Vulkan renderer, the GPU. A 1280x720 game runs at
+  about 7 to 10 frames a second on a fast computer.
 
 ## What you bring
 
@@ -63,5 +66,7 @@ is the design log: what was decided, why, and what was measured.
 
 This repository's own code is MIT, and so is Ikemen GO. Go is BSD-3-Clause;
 the Go modules inside are under their own permissive licences; libxmp and
-Mesa are MIT, LLVM is Apache 2.0 with the LLVM exception. The package carries
-every licence text. See [LICENSE](LICENSE).
+Mesa are MIT, LLVM is Apache 2.0 with the LLVM exception; FFmpeg is LGPL 2.1
+(linked statically; this repository builds the core again with a changed
+FFmpeg) and libvpx BSD-3-Clause. The package carries every licence text. See
+[LICENSE](LICENSE).

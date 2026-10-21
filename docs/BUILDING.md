@@ -24,9 +24,10 @@ Linux and on Windows.
 - `extern/Ikemen-GO` (v1.0.0) and `extern/Ikemen-GO-Screenpack` (the commit
   of 2026-09-11, what 1.0.0 shipped with) are submodules:
   `git submodule update --init`.
-- Go 1.27.3, LLVM 18.1.8, Mesa 24.0.9 and libxmp 4.7.4 are release tarballs
-  fetched into `build/deps` by the scripts, each checked against a pinned
-  SHA-256. `CHIMERA_DEPS_DIR` points them at another folder.
+- Go 1.27.3, LLVM 18.1.8, Mesa 24.0.9, libxmp 4.7.4, FFmpeg 7.1.5 and
+  libvpx 1.15.2 are release tarballs fetched into `build/deps` by the
+  scripts, each checked against a pinned SHA-256. `CHIMERA_DEPS_DIR` points
+  them at another folder.
 
 ## Steps
 
@@ -37,6 +38,7 @@ Linux and on Windows.
     waterbox/setup-mesa.sh -n                              # Mesa for the native build
     waterbox/setup-mesa.sh -m $mb                          # Mesa for the guest
     waterbox/build-libxmp.sh native && waterbox/build-libxmp.sh guest -m $mb
+    waterbox/build-ffmpeg.sh native && waterbox/build-ffmpeg.sh guest -m $mb
     waterbox/make-native-libm.sh $mb                       # the sandbox's math, for the native build
     waterbox/build-ikemen.sh native -m $mb                 # build/native/libikemen.a
     waterbox/build-ikemen.sh guest -m $mb                  # build/guest/libikemen.a
@@ -46,9 +48,15 @@ Linux and on Windows.
 `build-ikemen.sh` copies the submodule to `build/ikemen-src`, applies
 `patches/`, adds `go/chimera` to Ikemen GO's package main and the engine's
 `data/`, `external/` and `font/` under it (the core carries them), puts
-`go/sdl2` and `go/reisen` in place of SDL 2's and FFmpeg's bindings, and
-builds a C archive with the tags `chimera,kinc,netgo,osusergo` and
-`GOEXPERIMENT=arenas` (Ikemen GO's rollback uses Go's arenas).
+`go/sdl2` in place of SDL 2's binding, and builds a C archive with the tags
+`chimera,kinc,netgo,osusergo` and `GOEXPERIMENT=arenas` (Ikemen GO's rollback
+uses Go's arenas). FFmpeg's binding is Ikemen GO's own (reisen); it finds
+`build-ffmpeg.sh`'s FFmpeg through pkg-config.
+
+`build-ffmpeg.sh` builds what Ikemen GO's releases build (FFmpeg under the
+LGPL: the Matroska/WebM reader, libvpx's VP8 and VP9 decoders, Opus and
+Vorbis, the scale, pad, crop and format filters), but as plain C with no
+threads, so that every computer decodes a video to the same bytes.
 
 ## The package
 
@@ -67,8 +75,8 @@ that it is the same file.
         <chimera>/source/gui/Chimera.Tests.Client.Common/Chimera.Tests.Client.Common.csproj \
         -c Release --filter "FullyQualifiedName~InstalledCorePackagesTests|FullyQualifiedName~MnemonicUniquenessTests"
 
-`run-gate.sh` makes the two test games (`tests/make-test-game.sh`,
-`tests/make-probe.sh`) and compares the native reference with the sandbox;
+`run-gate.sh` makes the three test games (`tests/make-test-game.sh`,
+`tests/make-probe.sh`, `tests/make-video-probe.sh`) and compares the native reference with the sandbox;
 it says what each test compared. `run-frontend.sh` builds the package and
 plays the test game through `chimera-run` and through Chimera's window under
 Mono on Xvfb; it needs Chimera built (its engine installed and its
@@ -94,3 +102,8 @@ print the digests of every picture, the sound and the steps
   missing.
 - A core that waits for ever at a frame: something Ikemen GO started on a
   goroutine is waiting for the main thread; see patches/0006.
+- "configured without LIBVPX_VP9_DECODER" from `build-ffmpeg.sh`: FFmpeg did
+  not find libvpx; its `build/ffmpeg-<flavour>-work/ffmpeg/configure.log`
+  says why (the libvpx it built is in `build/ffmpeg-<flavour>/lib`).
+- `tests/video/beeps.webm` is made by `tests/make-beeps-video.sh` with a host
+  FFmpeg; it is committed, so the tests do not need one.

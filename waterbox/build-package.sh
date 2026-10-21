@@ -34,7 +34,7 @@ mb="$(cd "$mb" && pwd)"
 [ -n "$out" ] || out="$root/build/package"
 
 # Go (both toolchains), LLVM and Mesa (the guest's OpenGL, built once into
-# build/), libxmp, Ikemen GO for the guest, then the link (link-core.sh runs
+# build/), libxmp, FFmpeg, Ikemen GO for the guest, then the link (link-core.sh runs
 # check-wbx before it calls core.wbx built)
 mkdir -p "$root/build"
 step() { # step <log> <what> <command...>
@@ -47,6 +47,7 @@ step llvm "the native LLVM build" bash "$here/build-llvm.sh" native
 step llvm-guest "the guest LLVM build" bash "$here/build-llvm.sh" guest -m "$mb"
 step mesa "the guest Mesa build" bash "$here/setup-mesa.sh" -m "$mb"
 step libxmp "the guest libxmp build" bash "$here/build-libxmp.sh" guest -m "$mb"
+step ffmpeg "the guest FFmpeg build" bash "$here/build-ffmpeg.sh" guest -m "$mb"
 step ikemen "the guest Ikemen GO build" bash "$here/build-ikemen.sh" guest -m "$mb"
 step licenses "collecting the Go modules' licences" bash "$here/collect-go-licenses.sh"
 step link "the guest link" bash "$here/link-core.sh" guest -m "$mb"
@@ -62,7 +63,8 @@ cp "$here/default_keybinds.json" "$staging/default_keybinds.json"
 # this file decides it.
 cp "$here/file_slots.json" "$staging/file_slots.json"
 # the terms travel with the binary: Ikemen GO, Go and its modules, libxmp,
-# Mesa and LLVM are somebody else's work (see waterbox/package-licenses.json)
+# Mesa, LLVM, FFmpeg and libvpx are somebody else's work (see
+# waterbox/package-licenses.json)
 python3 "$mb/source/guest/package-licenses.py" "$root" "$staging"
 
 # ---- version (see chimera docs: commit-as-version, stamped by CD) ----

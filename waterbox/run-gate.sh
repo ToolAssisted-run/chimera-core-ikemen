@@ -2,19 +2,22 @@
 # run-gate.sh - the Ikemen GO core's tests: the native reference (run-native)
 # and the sandbox (core.wbx through run-wbx) are the same machine, on two
 # games the scripts make: the Ikemen GO screenpack from the submodule, zipped
-# as a game folder (tests/make-test-game.sh), and this repository's probe
+# as a game folder (tests/make-test-game.sh), this repository's probe
 # (tests/probe: a Lua script Ikemen GO runs in place of its menus, which
-# prints every frame what the game learns from the machine).
+# prints every frame what the game learns from the machine), and its video
+# probe (tests/video: a storyboard of two videos, one with sound).
 #
 # Every test says what it compared. The tests:
-#   equivalence  the screenpack game from boot through VS Mode, both players
-#                picking Kung Fu Man, a random stage, the round's intro and a
-#                fight: every frame's picture, the sound, the steps and lag,
-#                the clock; and the probe's lines and pictures
+#   equivalence  the screenpack game from boot (its logo video) through VS
+#                Mode, both players picking Kung Fu Man, a random stage, the
+#                round's intro and a fight: every frame's picture, the sound,
+#                the steps and lag, the clock; the probe's lines and pictures;
+#                the video probe's pictures and sound
 #   rerecord     the sandbox saved and loaded before every frame = without
-#                (the probe, and the first 300 frames of the game)
-#   session      saved in the middle of the fight, a new host, loaded and
-#                finished = without
+#                (the probe, the first 300 frames of the game, the first 130
+#                of the video probe)
+#   session      saved in the middle of the fight, or of the videos, a new
+#                host, loaded and finished = without
 #   turbo        the first half not read back: the rest the same, and the
 #                first half's pictures really not there
 #   teeth        the comparison sees a button pressed one frame later
@@ -31,6 +34,9 @@
 #                that names a place outside it is refused
 #   renderer     the game draws on llvmpipe with the pinned CPU's 128-bit
 #                vectors in both builds, whatever this computer has
+#   videos       a video's pictures and its sound come on the frames their
+#                times say, a looping video starts again when it ends, and
+#                the game's logo video is drawn
 #   refusals     no game, and a file that is not a zip: each says why
 #
 # usage: run-gate.sh -m <miniBox checkout>
@@ -59,12 +65,13 @@ step "the Go toolchains" "$root/build/gate-go.log" bash "$here/setup-go.sh"
 step "the LLVM builds" "$root/build/gate-llvm.log" bash -c "bash '$here/build-llvm.sh' native && bash '$here/build-llvm.sh' guest -m '$mb'"
 step "the Mesa builds" "$root/build/gate-mesa.log" bash -c "bash '$here/setup-mesa.sh' -m '$mb' && bash '$here/setup-mesa.sh' -n"
 step "the libxmp builds" "$root/build/gate-libxmp.log" bash -c "bash '$here/build-libxmp.sh' native && bash '$here/build-libxmp.sh' guest -m '$mb'"
+step "the FFmpeg builds" "$root/build/gate-ffmpeg.log" bash -c "bash '$here/build-ffmpeg.sh' native && bash '$here/build-ffmpeg.sh' guest -m '$mb'"
 step "the sandbox's math for the native build" "$root/build/gate-libm.log" bash "$here/make-native-libm.sh" "$mb"
 step "the native Ikemen GO build" "$root/build/gate-native.log" bash "$here/build-ikemen.sh" native -m "$mb"
 step "the native link" "$root/build/gate-link-native.log" bash "$here/link-core.sh" native -m "$mb"
 step "the guest Ikemen GO build" "$root/build/gate-guest.log" bash "$here/build-ikemen.sh" guest -m "$mb"
 step "the guest link" "$root/build/gate-link-guest.log" bash "$here/link-core.sh" guest -m "$mb"
-step "the test game" "$root/build/gate-games.log" bash -c "bash '$root/tests/make-test-game.sh' && bash '$root/tests/make-probe.sh'"
+step "the test games" "$root/build/gate-games.log" bash -c "bash '$root/tests/make-test-game.sh' && bash '$root/tests/make-probe.sh' && bash '$root/tests/make-video-probe.sh'"
 native="$root/build/native/run-native"
 wbx="$root/build/guest/run-wbx"
 core="$root/build/guest/core.wbx"
@@ -115,7 +122,7 @@ fight=(--press 400:P1Start:6 --press 480:P1Down:3 --press 520:P1A:3 --press 640:
 	--press 2030:P1Down:20 --press 2040:P1A:4 --press 2080:P2Z:4 --press 2100:P1X:4 --press 2150:P1Right:60 --press 2160:P1Y:4)
 mkwork game "$root/build/tests/test-game.zip"
 echo "== the screenpack game ($frames frames: VS Mode, Kung Fu Man against Kung Fu Man, a fight)"
-"$native" "$work/game" --frames $frames "${fight[@]}" > "$work/n.txt" 2> "$work/n.err" &
+"$native" "$work/game" --frames $frames "${fight[@]}" --screenshot "60:$work/game60.tga" > "$work/n.txt" 2> "$work/n.err" &
 "$wbx" "$core" "$work/game" --frames $frames "${fight[@]}" > "$work/w.txt" 2> "$work/w.err"
 wait
 same equivalence "$work/n.txt" "$work/w.txt" "native = sandbox, $frames frames: every picture, the sound, the steps"
@@ -192,6 +199,31 @@ has controls "$work/pn.txt" "in=P4m" "P4 Menu (the Back button)"
 has controls "$work/pn.txt" "in=P1c,P1w" "P1 C and W, the two triggers"
 has controls "$work/pn.txt" "in=Esc" "Escape"
 has controls "$work/pn.txt" "in=P3y" "P3 Y"
+
+echo "== videos (tests/video: beeps.webm, under the screenpack's logo video looping)"
+mkwork video "$root/build/tests/video-probe.zip"
+vf=300
+vshots=()
+for f in 20 58 59 64 65 118 119 124 125 260; do vshots+=(--screenshot "$f:$work/video/v$f.tga"); done
+"$native" "$work/video" --frames $vf --audio "$work/video/n.raw" "${vshots[@]}" > "$work/vn.txt" 2> "$work/vn.err" &
+"$wbx" "$core" "$work/video" --frames $vf > "$work/vw.txt" 2> "$work/vw.err"
+wait
+same equivalence "$work/vn.txt" "$work/vw.txt" "the video probe: native = sandbox, $vf frames, every picture and the sound"
+"$wbx" "$core" "$work/video" --frames $vf --session-at 90 > "$work/vs.txt" 2> "$work/vs.err" &
+"$wbx" "$core" "$work/video" --frames 130 --rerecord > "$work/vr.txt" 2> "$work/vr.err" &
+"$wbx" "$core" "$work/video" --frames 130 > "$work/vw130.txt" 2> "$work/vw130.err"
+wait
+same session "$work/vs.txt" "$work/vw.txt" "the video probe saved at frame 90, between the two beeps, loaded into a new host = straight"
+same rerecord "$work/vr.txt" "$work/vw130.txt" "the video probe saved and loaded before each of its first 130 frames = straight ($(sed -n 's/stateBytes=//p' "$work/vr.err") state bytes)"
+python3 "$root/tests/check-video.py" "$work/video" "$work/game60.tga" > "$work/video/checks.txt" 2>&1
+for what in pictures sound loop logo; do
+	line="$(grep -E "^(ok|bad) $what: " "$work/video/checks.txt" | head -1)"
+	case "$line" in
+		ok*) pass "videos: ${line#ok $what: }" ;;
+		bad*) fail "videos: ${line#bad $what: }" ;;
+		*) fail "videos: $what: no answer from check-video.py ($(tail -1 "$work/video/checks.txt"))" ;;
+	esac
+done
 
 echo "== save data (the probe writes save/probe.txt)"
 mkdir -p "$work/sdn" "$work/sdw" "$work/sds"

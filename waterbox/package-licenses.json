@@ -1,11 +1,11 @@
 {
   "package": "ikemen",
-  "effectiveTerms": "MIT for Ikemen GO and for this core; BSD-3-Clause for the Go runtime; the Go modules inside under their own permissive licences (MIT, BSD, Apache-2.0, the FreeType License, the Unlicense), with their texts in go-modules.txt; MIT for libxmp and Mesa; Apache-2.0 with the LLVM exception for LLVM",
+  "effectiveTerms": "MIT for Ikemen GO and for this core; BSD-3-Clause for the Go runtime; the Go modules inside under their own permissive licences (MIT, BSD, Apache-2.0, the FreeType License, the Unlicense), with their texts in go-modules.txt; MIT for libxmp and Mesa; Apache-2.0 with the LLVM exception for LLVM; LGPL-2.1-or-later for FFmpeg; BSD-3-Clause for libvpx",
   "commercialUse": "allowed",
-  "note": "The built core combines this repository's code (MIT): the glue in go/chimera, the stand-ins for SDL 2's and FFmpeg's Go bindings in go/sdl2 and go/reisen, and the build scripts; Ikemen GO (MIT), compiled from the submodule extern/Ikemen-GO (v1.0.0) as a C archive with this repository's patches/ applied, with its engine files (data/, external/, font/) inside; the Go runtime and standard library (BSD-3-Clause, Go 1.27.3 with waterbox/go-patches applied); the Go modules Ikemen GO imports, each under the licence go-modules.txt gives (golang/freetype under the FreeType License: portions of this software are copyright The FreeType Project, www.freetype.org); libxmp (MIT); Mesa (MIT), whose llvmpipe driver behind OSMesa is the OpenGL Ikemen GO draws with (waterbox/mesa-patches applied); and LLVM (Apache-2.0 with the LLVM exception), which llvmpipe compiles shaders with. The package carries no game: the project brings the game folder as a zip.",
+  "note": "The built core combines this repository's code (MIT): the glue in go/chimera, the stand-in for SDL 2's Go binding in go/sdl2, and the build scripts; Ikemen GO (MIT), compiled from the submodule extern/Ikemen-GO (v1.0.0) as a C archive with this repository's patches/ applied, with its engine files (data/, external/, font/) inside; the Go runtime and standard library (BSD-3-Clause, Go 1.27.3 with waterbox/go-patches applied); the Go modules Ikemen GO imports, each under the licence go-modules.txt gives (golang/freetype under the FreeType License: portions of this software are copyright The FreeType Project, www.freetype.org); libxmp (MIT); Mesa (MIT), whose llvmpipe driver behind OSMesa is the OpenGL Ikemen GO draws with (waterbox/mesa-patches applied); LLVM (Apache-2.0 with the LLVM exception), which llvmpipe compiles shaders with; and FFmpeg 7.1.5 (LGPL-2.1-or-later, built without its GPL parts) with libvpx 1.15.2 (BSD-3-Clause, with Google's patent grant in its PATENTS file), which play the games' background videos. FFmpeg is linked into the core statically: its source (the release tarball, unmodified) and this core's whole source and build scripts (waterbox/build-ffmpeg.sh, waterbox/link-core.sh) are published, so a user can build the core again with a changed FFmpeg, as the LGPL asks. The package carries no game: the project brings the game folder as a zip.",
   "components": [
     {
-      "name": "chimera-core-ikemen (the glue, the stand-in packages and the build)",
+      "name": "chimera-core-ikemen (the glue, the SDL 2 stand-in and the build)",
       "license": "MIT",
       "url": "https://github.com/ToolAssisted-run/chimera-core-ikemen",
       "commit": "{selfCommit}",
@@ -59,6 +59,30 @@
       "version": "18.1.8",
       "file": "waterbox/licenses/LLVM-LICENSE.TXT",
       "sourceUrl": "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/llvm-project-18.1.8.src.tar.xz"
+    },
+    {
+      "name": "FFmpeg (background videos)",
+      "license": "LGPL-2.1-or-later",
+      "url": "https://ffmpeg.org",
+      "version": "7.1.5",
+      "file": "build/ffmpeg-guest-work/ffmpeg-src/COPYING.LGPLv2.1",
+      "sourceUrl": "https://ffmpeg.org/releases/ffmpeg-7.1.5.tar.xz"
+    },
+    {
+      "name": "libvpx (VP8 and VP9 pictures, inside FFmpeg)",
+      "license": "BSD-3-Clause",
+      "url": "https://chromium.googlesource.com/webm/libvpx",
+      "version": "1.15.2",
+      "file": "build/ffmpeg-guest-work/vpx-src/LICENSE",
+      "sourceUrl": "https://github.com/webmproject/libvpx/archive/refs/tags/v1.15.2.tar.gz"
+    },
+    {
+      "name": "libvpx's patent grant",
+      "license": "Google's additional IP rights grant for VP8 and VP9",
+      "url": "https://chromium.googlesource.com/webm/libvpx",
+      "version": "1.15.2",
+      "file": "build/ffmpeg-guest-work/vpx-src/PATENTS",
+      "sourceUrl": "https://github.com/webmproject/libvpx/archive/refs/tags/v1.15.2.tar.gz"
     }
   ]
 }

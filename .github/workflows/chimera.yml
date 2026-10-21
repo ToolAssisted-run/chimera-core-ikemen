@@ -121,7 +121,7 @@ jobs:
           bash ./waterbox/setup-mesa.sh -m "$mb"
 
       - name: Run the test script
-        # It builds Ikemen GO for both, links both, and runs the tests. A run in
+        # It builds FFmpeg and Ikemen GO for both, links both, and runs the tests. A run in
         # which these did not pass has tested nothing, so they are asked for
         # by name.
         run: |
@@ -129,7 +129,7 @@ jobs:
           bash ./waterbox/run-gate.sh -m "$PWD/chimera-checkout/extern/chimera-common-minibox" > gate.out 2>&1 || rc=$?
           grep -v '^miniBox:' gate.out
           [ "$rc" -eq 0 ]
-          for t in equivalence rerecord session turbo teeth renderer clock random controls "save data" refusals; do
+          for t in equivalence rerecord session turbo teeth renderer clock random controls "save data" videos refusals; do
             grep -q "^PASS $t:" gate.out || { echo "$t did not pass"; exit 1; }
           done
 

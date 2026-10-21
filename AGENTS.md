@@ -15,8 +15,11 @@ this repository's `docs/PLAN.md` first.
 - `go/chimera` - the core's files added to Ikemen GO's package main:
   `chimera_core.c` (Chimera's calls, OSMesa, the frame handover),
   `chimera_core.go` (the Go half: start, sound, controls, configuration),
-  `chimera_fs.go` (the game's disk), `chimera_util.go` (the desktop helpers).
-- `go/sdl2`, `go/reisen` - stand-ins for SDL 2's and FFmpeg's Go bindings.
+  `chimera_fs.go` (the game's disk), `chimera_util.go` (the desktop helpers),
+  `chimera_video.go` (background videos, decoded on the frame),
+  `chimera_props.go` (the game's properties).
+- `go/sdl2` - a stand-in for SDL 2's Go binding. FFmpeg's binding (reisen) is
+  Ikemen GO's own, over the FFmpeg `build-ffmpeg.sh` makes.
 - `patches/` - numbered patches to Ikemen GO.
 - `waterbox/go-patches` - the patches to Go: `common/` in both toolchains,
   `guest/` in the sandbox's.
@@ -25,7 +28,8 @@ this repository's `docs/PLAN.md` first.
   `package-licenses.json`), the harness (`gate-harness.h`, `run-native.c`,
   `run-wbx.c`, `input-names.h`), `run-gate.sh`.
 - `tests/` - the test games' scripts (`make-test-game.sh`, `make-probe.sh`,
-  `probe/`), `run-frontend.sh` and its helpers.
+  `probe/`, `make-video-probe.sh`, `video/`, `check-video.py`),
+  `run-frontend.sh` and its helpers.
 - `tools/` - generators (`gen-sdl-consts.py`, `gen-input-names.py`) and
   `tga2png.py`.
 - `build/` - every output. Ignored by git.
@@ -37,6 +41,7 @@ this repository's `docs/PLAN.md` first.
     waterbox/build-llvm.sh native && waterbox/build-llvm.sh guest -m $mb
     waterbox/setup-mesa.sh -n && waterbox/setup-mesa.sh -m $mb
     waterbox/build-libxmp.sh native && waterbox/build-libxmp.sh guest -m $mb
+    waterbox/build-ffmpeg.sh native && waterbox/build-ffmpeg.sh guest -m $mb
     waterbox/make-native-libm.sh $mb
     waterbox/build-ikemen.sh native -m $mb && waterbox/build-ikemen.sh guest -m $mb
     waterbox/link-core.sh native -m $mb && waterbox/link-core.sh guest -m $mb
@@ -51,10 +56,12 @@ this repository's `docs/PLAN.md` first.
   file call goes through `chimera_fs.go`), no environment.
 - Nothing runs beside the frames: a goroutine that works while frames go by
   (a loader, a sound pusher) makes the native build differ from the
-  sandbox. Make it finish before the frame ends (patches/0006).
+  sandbox. Make it finish before the frame ends (patches/0006), or do its
+  work on the frame (background videos, patches/0007).
 - The native reference links the sandbox's math (`make-native-libm.sh`);
   never let it fall back to glibc's. Go's own maths is Go's in both builds.
-- llvmpipe sees one CPU everywhere (mesa-patches/0001).
+- llvmpipe sees one CPU everywhere (mesa-patches/0001); FFmpeg and libvpx
+  are plain C, with no threads (build-ffmpeg.sh).
 - A change to `waterbox.config`'s buttons changes `chimera_core.h`,
   `padControls` in `chimera_core.go` and `input-names.h`
   (`tools/gen-input-names.py`) the same way, in the same order.
