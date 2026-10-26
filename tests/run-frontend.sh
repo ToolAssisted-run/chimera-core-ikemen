@@ -84,11 +84,14 @@ python3 "$here/make-project.py" "$pkg" "$work/proj/test.chimeraProject" "$frames
 if [ ! -x "$crun" ]; then
 	report "engine" SKIP "no chimera-run at $crun"
 else
-	( cd "$work" && timeout 1800 "$crun" "$pkg" "$game" test.log --frames "$frames" \
+	# a game runs only in a project (Chimera, 2026-10-26): the game and the movie
+	# made into one by chimera-run
+	( cd "$work" && "$crun" --new-project "$work/movie.chimeraProject" "$pkg" "$game" test.log > "$work/movie.make.log" 2>&1 \
+		&& timeout 1800 "$crun" --project "$work/movie.chimeraProject" "$pkg" --files "$(dirname "$game")" --frames "$frames" \
 		--screenshot "$((frames - 1))=$work/run.last.tga" --meta "$work/run.meta" > "$work/run.log" 2>&1 )
 	if grep -q '^status=OK' "$work/run.meta" 2>/dev/null &&
 	   python3 "$here/compare-pictures.py" "$work/native.last.tga" "$work/run.last.tga" > "$work/run.pic" 2>&1; then
-		report "engine:movie" PASS "$frames frames from a movie file (Start opened the title menu): the last picture is the reference's, $(cat "$work/run.pic")"
+		report "engine:movie" PASS "$frames frames from a movie made into a project (Start opened the title menu): the last picture is the reference's, $(cat "$work/run.pic")"
 	else
 		report "engine:movie" FAIL "$(grep -m1 detail= "$work/run.meta" 2>/dev/null) $(cat "$work/run.pic" 2>/dev/null) (build/frontend/run.log)"
 	fi
