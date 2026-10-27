@@ -50,6 +50,9 @@ pcall(function() client.invisibleemulation(true) end)
 -- a project may open a frame or two in; run to the frame asked for
 local frames = tonumber(job.frames) or 120
 while emu.framecount() < frames do
+	-- the last frame is drawn, so the screenshot below is of it (in the
+	-- window frames run undrawn while invisibleemulation is on)
+	if emu.framecount() == frames - 1 then pcall(function() client.invisibleemulation(false) end) end
 	emu.frameadvance()
 end
 
