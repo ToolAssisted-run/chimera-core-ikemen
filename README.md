@@ -5,7 +5,7 @@ frontend for tool-assisted speedruns, that plays games made with
 **[Ikemen GO](https://github.com/ikemen-engine/Ikemen-GO)**, the open-source
 fighting game engine that runs M.U.G.E.N characters, stages and screenpacks.
 It is Ikemen GO 1.0.0 built for Chimera's sandbox, and produces one file,
-`ikemen.chimeraCore`, that goes in Chimera's `Cores` folder.
+`ikemen.chimeraCore`, that goes in Chimera's `cores` folder.
 
 Ikemen GO is written in Go, so the core is built with a Go of its own: Go
 1.27.3 with a few patches that make a Go program run in the sandbox (its

@@ -76,9 +76,7 @@ that it is the same file.
 
     waterbox/run-gate.sh -m $mb
     tests/run-frontend.sh --chimera-root <chimera>
-    CHIMERA_CORES_DIR=build/package dotnet test \
-        <chimera>/source/gui/Chimera.Tests.Client.Common/Chimera.Tests.Client.Common.csproj \
-        -c Release --filter "FullyQualifiedName~InstalledCorePackagesTests|FullyQualifiedName~MnemonicUniquenessTests"
+    CHIMERA_CORES_DIR=build/package <chimera>/build/meson-linux/source/ui/test-packages
 
 `run-gate.sh` makes the test games (`tests/make-test-game.sh`,
 `tests/make-probe.sh`, `tests/make-video-probe.sh`,
@@ -96,9 +94,9 @@ in the sandbox, and compare:
     build/native-media/run-native <folder> --frames 1 > n.txt
     build/guest-media/run-wbx build/guest-media/core.wbx <folder> --frames 1 > w.txt
     tests/media/check-media.py <game.zip> n.txt w.txt `run-frontend.sh` builds the package and
-plays the test game through `chimera-run` and through Chimera's window under
-Mono on Xvfb; it needs Chimera built (its engine installed and its
-interface).
+plays the test game through `chimera-run` and through Chimera's window, run
+headless (no display needed); it needs Chimera built with its window
+(`<chimera>/tools/ci-chimera.sh` builds it).
 
 The harness by hand: a work folder holds the game's zip, a `slots` file
 (`{"game":["test-game.zip"]}`) and a `settings` file (`{}`), then

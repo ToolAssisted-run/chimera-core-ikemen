@@ -222,8 +222,8 @@ numbers on player 1's side).
   exactly the clock, controls, turbo and save data tests (27 passed, 4
   failed); the teeth test is the comparison's own control.
 - tests/run-frontend.sh against Chimera a11b398: 6 ok, 0 failed. chimera-run
-  from a movie file and from a project, and Chimera's window under Mono on
-  Xvfb, draw the native reference's title menu at frame 459 to the pixel; in
+  from a movie file and from a project, and Chimera's window (that run was
+  on the C# window), draw the native reference's title menu at frame 459 to the pixel; in
   a fight (frame 1920) the properties read player 1's life 1000 of 1000, and
   setting it to 123 and player 2's power to 2500 reads back a frame later;
   Life Max refuses a write. With the write back switched off, that test
