@@ -387,13 +387,13 @@ import zipfile
 z = zipfile.ZipFile('$work/bad.zip', 'w'); z.writestr('../escape.txt', 'no'); z.close()"
 seed seedbad '{"game":["probe.zip"],"savedata":["bad.zip"]}' "$work/bad.zip"
 "$native" "$work/seedbad" --frames 1 > "$work/seedbad.txt" 2> /dev/null
-has "save data" "$work/seedbad.txt" 'loadError=the project'"'"'s save data could not be used: bad.zip: "../escape.txt" is not a name inside the game'"'"'s folder' "a zip holding a name outside the game's folder is refused, saying which"
+has "save data" "$work/seedbad.txt" 'loadError=error.save_data_unusable'$'\x1f''error.save_name_outside'$'\x1e''bad.zip'$'\x1e''../escape.txt' "a zip holding a name outside the game's folder is refused, saying which"
 
 echo "== refusals"
 mkdir -p "$work/nogame"
 printf '{"game":["missing.zip"]}' > "$work/nogame/slots"; printf '{}' > "$work/nogame/settings"
 "$native" "$work/nogame" --frames 1 > "$work/nogame.txt" 2> /dev/null
-if grep -q "^loadError=the game's zip (missing.zip) could not be read" "$work/nogame.txt"; then
+if grep -q "^loadError=error.game_zip_unreadable"$'\x1f'"missing.zip" "$work/nogame.txt"; then
 	pass "refusals: a game that is not there says so"
 else
 	fail "refusals: missing game: $(grep loadError "$work/nogame.txt")"
@@ -402,7 +402,7 @@ mkdir -p "$work/notzip"
 head -c 4096 /dev/zero | tr '\0' 'x' > "$work/notzip/game.zip"
 printf '{"game":["game.zip"]}' > "$work/notzip/slots"; printf '{}' > "$work/notzip/settings"
 "$native" "$work/notzip" --frames 1 > "$work/notzip.txt" 2> /dev/null
-if grep -q "^loadError=the game's zip (game.zip) could not be read: zip: not a valid zip file" "$work/notzip.txt"; then
+if grep -q "^loadError=error.game_zip_unreadable"$'\x1f'"game.zip"$'\x1f'"zip: not a valid zip file" "$work/notzip.txt"; then
 	pass "refusals: a file that is not a zip: $(sed -n 's/^loadError=//p' "$work/notzip.txt")"
 else
 	fail "refusals: not a zip: $(grep loadError "$work/notzip.txt")"

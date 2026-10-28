@@ -3,17 +3,17 @@
   "slots": [
     {
       "id": "game",
-      "title": "Game",
+      "title": "slot.game",
       "min": 1,
       "max": 1,
       "formats": [
         "zip"
       ],
-      "help": "The game: an Ikemen GO game folder (the one holding chars/, stages/, data/ and the rest, as an Ikemen GO release unpacks), zipped. The zip may hold the folder itself or its contents. What the core does not find in it - the engine's own data/, external/ and font/ files - it brings itself, from the Ikemen GO it is built with."
+      "help": "slot.game.help"
     },
     {
       "id": "savedata",
-      "title": "Save data",
+      "title": "slot.savedata",
       "min": 0,
       "max": -1,
       "formats": [
@@ -22,7 +22,7 @@
         "json",
         ""
       ],
-      "help": "What the game wrote, as Game > Export Save Data gave it: the .zip of the files with their folders (save/config.ini, save/stats.json...), or a single file, which goes into save/. They are put in the game's folder before it starts."
+      "help": "slot.savedata.help"
     }
   ]
 }

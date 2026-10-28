@@ -24,7 +24,7 @@ func ShowInfoDialog(message, title string) {
 // does too, with the error as its reason.
 func ShowErrorDialog(message string) {
 	fmt.Fprintf(os.Stderr, "I.K.E.M.E.N Error: %s\n", message)
-	chimeraFail("Ikemen GO: " + message)
+	chimeraFail("error.ikemen_error" + textArg + message)
 }
 
 // LoadFntTtf is util_desktop.go's, without the search of the computer's own
@@ -32,7 +32,7 @@ func ShowErrorDialog(message string) {
 func LoadFntTtf(f *Fnt, fontfile string, filename string, height int32) {
 	fileDir := SearchFile(filename, []string{fontfile, sys.motif.Def, "", "data/"}, "font/")
 	if fp := FileExist(fileDir); len(fp) == 0 {
-		panic(fmt.Errorf("failed to find ttf font %v (the core uses no font of the computer's)", fileDir))
+		panic(fmt.Errorf("error.font_not_found"+textInner+"%v", fileDir))
 	}
 	if height == -1 {
 		height = int32(f.Size[1])
@@ -41,7 +41,7 @@ func LoadFntTtf(f *Fnt, fontfile string, filename string, height int32) {
 	}
 	ttf, err := gfxFont.LoadFont(fileDir, height, int(sys.gameWidth), int(sys.gameHeight))
 	if err != nil {
-		panic(fmt.Errorf("failed to load ttf font %v: %w", fileDir, err))
+		panic(fmt.Errorf("error.font_not_loaded"+textInner+"%v"+textInner+"%w", fileDir, err))
 	}
 	f.ttf = ttf.(Font)
 	f.palettes = make([][256]uint32, 1)

@@ -282,7 +282,7 @@ func fsSeedSaveData(names []string) error {
 			}
 			clean := path.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
 			if path.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, "../") {
-				return fmt.Errorf("%s: %q is not a name inside the game's folder", name, f.Name)
+				return fmt.Errorf("error.save_name_outside"+textInner+"%s"+textInner+"%s", name, f.Name)
 			}
 			rc, err := f.Open()
 			if err != nil {

@@ -34,6 +34,14 @@ import (
 // chimeraCore is true in this build: what Ikemen GO's patched files ask.
 const chimeraCore = true
 
+// A text a person reads is a key of languages/en.json, each of its arguments
+// after a textArg; a reason put inside another text separates its own
+// arguments with a textInner (chimera docs/translations.md).
+const (
+	textArg   = "\x1f"
+	textInner = "\x1e"
+)
+
 // the machine's time that time.Now reads (go-patches/common/0003), in
 // nanoseconds since 1970
 //
@@ -58,7 +66,7 @@ func init() {
 	sdl.Controllers = C.CHIMERA_PLAYERS
 	sdl.Hooks.MakeContext = func(w, h int) error {
 		if r := C.chimera_gl_make(C.int(w), C.int(h)); r != 0 {
-			return fmt.Errorf("the core could not make an OpenGL 3.3 context of %dx%d (%d)", w, h, int(r))
+			return fmt.Errorf("error.gl_context"+textInner+"%d"+textInner+"%d"+textInner+"%d", w, h, int(r))
 		}
 		return nil
 	}
@@ -93,7 +101,7 @@ func chimeraMain() {
 	sys.randseed = int32(time.Now().UnixNano())
 	defer func() {
 		if r := recover(); r != nil {
-			chimeraFail(fmt.Sprintf("Ikemen GO stopped: %v\n%s", r, debug.Stack()))
+			chimeraFail(fmt.Sprintf("error.ikemen_stopped"+textArg+"%v"+textArg+"%s", r, debug.Stack()))
 		}
 	}()
 
@@ -105,14 +113,14 @@ func chimeraMain() {
 		game = C.GoString(&name[0])
 	}
 	if err := fsStart(game); err != nil {
-		chimeraFail(fmt.Sprintf("the game's zip (%s) could not be read: %v (give the zip of an Ikemen GO game folder)", game, err))
+		chimeraFail(fmt.Sprintf("error.game_zip_unreadable"+textArg+"%s"+textArg+"%v", game, err))
 	}
 	var saves []string
 	for i := 0; C.chimera_slot(C.CString("savedata"), C.int(i), &name[0], C.int(len(name))) != 0; i++ {
 		saves = append(saves, C.GoString(&name[0]))
 	}
 	if err := fsSeedSaveData(saves); err != nil {
-		chimeraFail("the project's save data could not be used: " + err.Error())
+		chimeraFail("error.save_data_unusable" + textArg + err.Error())
 	}
 	legacyConfig()
 
@@ -121,7 +129,7 @@ func chimeraMain() {
 		sdl.Push(sdl.JoyDeviceAddedEvent{Type: sdl.JOYDEVICEADDED, Which: sdl.JoystickID(i)})
 	}
 	realMain()
-	chimeraFail("the game ended (Exit was chosen)")
+	chimeraFail("error.game_ended")
 }
 
 // the share of a second's sound one frame holds: rate / fps, the remainder
