@@ -18,7 +18,7 @@
 		"property.life_max": "Det højeste liv, kæmperen kan have",
 		"property.match_frame": "Billeder, motoren har kørt, siden den startede",
 		"property.match_match_time": "Tik, kampen har kørt",
-		"property.match_random_seed": "Motorens tilfældige talgenerators tilstand: hvert tilfældigt valg (AI, en tilfældig figur eller bane, Luas math.random) kommer fra den",
+		"property.match_random_seed": "Motorens tilfældige talgenerators tilstand: hvert tilfældigt valg (AI, en tilfældig figur eller bane, math.random i Lua) kommer fra den",
 		"property.match_round": "Runden, der spilles, fra 1",
 		"property.match_round_state": "Hvor runden er",
 		"property.match_round_time": "Tid tilbage i runden, i tik (60 i sekundet); -1 for ingen tidsgrænse",

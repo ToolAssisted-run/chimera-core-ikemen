@@ -18,7 +18,7 @@
 		"property.life_max": "Suurin elämä, jonka taistelija voi saada",
 		"property.match_frame": "Kehykset, jotka moottori on ajanut käynnistymisestä",
 		"property.match_match_time": "Tikit, jotka ottelu on kestänyt",
-		"property.match_random_seed": "Moottorin satunnaislukugeneraattorin tila: jokainen satunnainen valinta (tekoäly, satunnainen hahmo tai taso, Luan math.random) tulee siitä",
+		"property.match_random_seed": "Moottorin satunnaislukugeneraattorin tila: jokainen satunnainen valinta (tekoäly, satunnainen hahmo tai taso, Lua-kielen math.random) tulee siitä",
 		"property.match_round": "Pelattava erä, alkaen 1:stä",
 		"property.match_round_state": "Missä erä on",
 		"property.match_round_time": "Erässä jäljellä oleva aika tikeissä (60 sekunnissa); -1 ei aikarajaa",
