@@ -92,6 +92,9 @@ case "$flavour" in
 			"$mb_cpp/source/guest/cxxglue.c.o" "$mb_cpp/source/guest/emulibc.c.o" "$out/jit-symbols.o" \
 			-Wl,--wrap=dlopen -Wl,--wrap=dlsym -Wl,--wrap=dlclose \
 			-L"$sr/lib" -lstdc++ -lm -lgcc -lgcc_eh -lc
+		# where the code reads its thread pointer, listed in the image: an Intel Mac
+		# rewrites those reads as the core loads (miniBox's wbx-tp-rewrite.py)
+		python3 "$minibox/source/guest/wbx-tp-rewrite.py" "$out/core.wbx.tmp"
 		sh "$minibox/source/guest/check-wbx.sh" "$out/core.wbx.tmp"
 		mv "$out/core.wbx.tmp" "$out/core.wbx"
 		# the sandbox runner, against miniBox's host library
