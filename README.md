@@ -13,10 +13,8 @@ system calls, its threads' stacks, its clock).
 
 ## Status
 
-Published: each push to `main` that passes the tests publishes a `dev`
-release, and a dated nightly is made once a day when `main` moved. Chimera's
-Core Manager lists it. The first published build is "Development build
-ccaaa382 (made 2026-10-21 15:38 CEST)". Chimera issue 324.
+Published: a dated nightly is made once a day when `main` moved and its
+tests pass. Chimera's Core Manager lists it. Chimera issue 324.
 
 - Ikemen GO games drawn with its OpenGL 3.3 renderer on a software OpenGL
   inside the core (Mesa's llvmpipe, made to generate the same code on every
