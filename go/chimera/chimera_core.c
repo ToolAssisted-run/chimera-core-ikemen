@@ -26,6 +26,12 @@
 
 #include "chimera_core.h"
 
+/* this core's windows in Chimera's Emulator menu: miniBox's ready-made Export
+ * Save Data, built on its exports (Chimera has no tool of its own for a core,
+ * Chimera issue 610) */
+#define WBX_WINDOWS_IMPLEMENTATION
+#include <waterbox_windows.h>
+
 #ifdef CHIMERA_GUEST
 /* machine spec v3: the sandbox's own clock and timed waits, which the Go
  * runtime's scheduler and timers use */
